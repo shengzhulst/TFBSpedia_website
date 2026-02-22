@@ -1,0 +1,16 @@
+SELECT DISTINCT
+"TFBS_position"."ID",
+"TFBS_position"."seqnames",
+"TFBS_position"."start",
+"TFBS_position"."end"
+FROM "TFBS_name"
+JOIN "TFBS_position"
+ON "TFBS_name"."ID" = "TFBS_position"."ID"
+WHERE "TFBS_name"."TFBS" = 'CTCF' OR "TFBS_name"."predicted_TFBS" = 'CTCF';
+
+
+SELECT COUNT(*)
+FROM "TFBS_name"
+JOIN "TFBS_position"
+ON "TFBS_name"."ID" = "TFBS_position"."ID"
+WHERE "TFBS_name"."TFBS" = 'CTCF' OR "TFBS_name"."predicted_TFBS" = 'CTCF';

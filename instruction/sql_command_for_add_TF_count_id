@@ -1,0 +1,19 @@
+##for human
+
+COPY (                                                                                                                                                                                                                                                                    
+    SELECT                                                                                                                                                                                                                                                                    
+        c.cell_tissue,                                                                                                                                                                                                                                                        
+        n."TFBS",                                                                                                                                                                                                                                                              
+        n."predicted_TFBS",                                                                                                                                                                                                                                                    
+        COUNT(c."ID") AS count_of_ID                                                                                                                                                                                                                                          
+    FROM                                                                                                                                                                                                                                                                      
+        "TFBS_cell_or_tissue" c                                                                                                                                                                                                                                               
+    JOIN                                                                                                                                                                                                                                                                      
+        "TFBS_name" n ON c."ID" = n."ID"                                                                                                                                                                                                                                      
+    GROUP BY                                                                                                                                                                                                                                                                  
+        c.cell_tissue,                                                                                                                                                                                                                                                        
+        n."TFBS",                                                                                                                                                                                                                                                              
+        n."predicted_TFBS"                                                                                                                                                                                                                                                     
+) TO './TFBSpedia_django/staticfiles/documents/cell_line_TF_count_human.csv' WITH CSV HEADER;
+
+

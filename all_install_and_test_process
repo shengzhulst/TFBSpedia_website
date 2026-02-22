@@ -1,0 +1,35 @@
+#python version: 3.13.2
+
+virtualenv TFBS_djange
+source TFBS_djange/bin/activate
+pip3 install -r requirements.txt
+
+
+
+## Drop the old databases if necessary
+psql -U postgres -c "DROP DATABASE tfbspedia_mouse"
+psql -U postgres -c "DROP DATABASE tfbspedia_human"
+# after install the postgres
+psql -U postgres -c "CREATE DATABASE tfbspedia_human"
+psql -U postgres -c "CREATE DATABASE tfbspedia_mouse"
+# input the sql files
+psql -U postgres -d tfbspedia_human -f /Users/shitingli/Downloads/human_TFBS.sql
+psql -U postgres -d tfbspedia_mouse -f /Users/shitingli/Downloads/mouse_TFBS.sql
+
+#`Set Up Database`
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+#`Start the App`
+
+```bash
+$ python manage.py runserver
+```
+
+#database part
+
+
+
