@@ -1,10 +1,6 @@
 # The Django part for TFBSpedia database
 
-This is the Django part of the TFBSpedia database with based on the free template from [Django Soft](https://app-generator.dev/django-soft) starter provided by [Django App Generator](https://app-generator.dev/tools/django-generator/).
-
 ## Dependencies:
-
-
 
 django==4.2.8
 
