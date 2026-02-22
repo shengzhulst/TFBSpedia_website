@@ -1,0 +1,577 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TFBSpedia - Transcription Factor Binding Site Database</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        .logo-container {
+            padding: 20px;
+            margin: 0 auto;
+            width: 350px;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+            box-shadow: none;
+            border: none;
+            background-color: transparent;
+        }
+        .logo-container img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .search-container {
+            border: 1px solid #ddd;
+            background-color: #f0f0f0;
+            padding: 40px;
+            margin: 0 auto;
+            width: 90%;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        #search-input {
+            width: 70%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            font-size: 18px;
+        }
+        .mode-switcher {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .mode-switcher label {
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        .search-toggle {
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .search-toggle label {
+            margin-right: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .file-upload-section {
+            display: none;
+            margin: 20px 0;
+        }
+        .file-upload-section.active {
+            display: block;
+        }
+        .text-search-section {
+            display: none;
+            margin: 20px 0;
+        }
+        .text-search-section.active {
+            display: block;
+        }
+        .file-input-container {
+            margin: 15px 0;
+        }
+        .file-input-container input[type="file"] {
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 70%;
+        }
+        .file-info {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #666;
+            text-align: left;
+            max-width: 70%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #search-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        #search-button:hover {
+            background-color: #45a049;
+        }
+        #file-search-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        #file-search-button:hover {
+            background-color: #45a049;
+        }
+        .examples {
+            margin: 20px 0;
+            font-size: 16px;
+            color: #666;
+        }
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #666;
+        }
+        .messages {
+            margin: 20px auto;
+            width: 90%;
+        }
+        
+        /* Autocomplete styles */
+        .autocomplete-container {
+            position: relative;
+            display: inline-block;
+            width: 70%;
+        }
+        
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%); /* Center the dropdown */
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            width: 60%; /* Make dropdown narrower than input */
+            min-width: 200px; /* Ensure minimum width */
+            max-width: 400px; /* Limit maximum width */
+        }
+        
+        .autocomplete-item {
+            padding: 8px 12px; /* Reduce padding to make items more compact */
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px; /* Slightly smaller font */
+        }
+        
+        .autocomplete-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .autocomplete-item.selected {
+            background-color: #e3f2fd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <img src="{% static 'images/logo.png' %}?v=2" alt="TFBSpedia Logo">
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="search-container">
+                <!-- Search Type Toggle -->
+                <div class="search-toggle">
+                    <label>
+                        <input type="radio" name="search_type" value="text" checked> Text Search
+                    </label>
+                    <label>
+                        <input type="radio" name="search_type" value="file"> File Upload
+                    </label>
+                </div>
+
+                <!-- Text Search Section -->
+                <div id="text-search-section" class="text-search-section active">
+                    <form id="search-form" action="{% url 'search_results' %}" method="get">
+                        <div class="autocomplete-container">
+                            <input type="text" id="search-input" name="query" placeholder="A Search bar (eg. chr1,10000,20000 or TF name)">
+                            <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                        </div>
+                        <div class="mode-switcher">
+                            <label>
+                                <input type="radio" name="species" value="human" checked> Human
+                            </label>
+                            <label>
+                                <input type="radio" name="species" value="mouse"> Mouse
+                            </label>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <button type="button" id="advanced-toggle-btn" onclick="toggleAdvancedSearch('text')" style="background:none; border:none; color:#6a1b9a; font-size:14px; cursor:pointer; text-decoration:underline; padding:0;">
+                                &#9654; Advanced Search Options
+                            </button>
+                        </div>
+                        <div id="text-advanced-search" style="display:none; background:#f8f8f8; border:1px solid #ddd; border-radius:6px; padding:10px 16px; margin-bottom:10px; max-width:70%; margin-left:auto; margin-right:auto;">
+                            <div style="display:flex; flex-wrap:nowrap; align-items:center; gap:8px; font-size:13px;">
+                                <label for="cell-line-select" style="white-space:nowrap; font-weight:bold; margin:0;">Cell Line/Tissue:</label>
+                                <select id="cell-line-select" name="cell_line" style="padding:4px 8px; font-size:13px; border:1px solid #ccc; border-radius:4px; min-width:150px; max-width:210px;">
+                                    <option value="">All cell lines/tissues</option>
+                                </select>
+                                <label for="tfbs-type-select" style="white-space:nowrap; font-weight:bold; margin:0; margin-left:12px;">TFBS Type:</label>
+                                <select id="tfbs-type-select" name="tfbs_type" style="padding:4px 8px; font-size:13px; border:1px solid #ccc; border-radius:4px; min-width:200px; max-width:270px;">
+                                    <option value="all">TFBS / Predicted TFBS (all)</option>
+                                    <option value="chip">TFBS (ChIP-seq)</option>
+                                    <option value="predicted">Predicted TFBS (ATAC-seq, DNase-seq)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" id="search-button">Search</button>
+                    </form>
+                </div>
+
+                <!-- File Upload Section -->
+                <div id="file-upload-section" class="file-upload-section">
+                    <p style="font-size:12px; color:#888; margin-bottom:6px;">
+                        Notice: Number of entries may not match the number of downloads due to TFBS overlap.
+                    </p>
+                    <form id="file-upload-form" action="{% url 'batch_search' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="file-input-container">
+                            <input type="file" id="file-input" name="search_file" accept=".txt,.csv" required>
+                        </div>
+                        <div class="file-info">
+                            <strong>File Format:</strong><br>
+                            • One search term per line<br>
+                            • TF names: FOXP3, CTCF, etc.<br>
+                            • Genomic regions: chr1,10000,20000<br>
+                            • Supported formats: .txt, .csv
+                        </div>
+                        <div class="mode-switcher">
+                            <label>
+                                <input type="radio" id="batch-species-human" name="species" value="human" checked> Human
+                            </label>
+                            <label>
+                                <input type="radio" id="batch-species-mouse" name="species" value="mouse"> Mouse
+                            </label>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <button type="button" id="batch-advanced-toggle-btn" onclick="toggleAdvancedSearch('batch')" style="background:none; border:none; color:#6a1b9a; font-size:14px; cursor:pointer; text-decoration:underline; padding:0;">
+                                &#9654; Advanced Search Options
+                            </button>
+                        </div>
+                        <div id="batch-advanced-search" style="display:none; background:#f8f8f8; border:1px solid #ddd; border-radius:6px; padding:10px 16px; margin-bottom:10px; max-width:70%; margin-left:auto; margin-right:auto;">
+                            <div style="display:flex; flex-wrap:nowrap; align-items:center; gap:8px; font-size:13px;">
+                                <label for="batch-cell-line-select" style="white-space:nowrap; font-weight:bold; margin:0;">Cell Line/Tissue:</label>
+                                <select id="batch-cell-line-select" name="cell_line" style="padding:4px 8px; font-size:13px; border:1px solid #ccc; border-radius:4px; min-width:150px; max-width:210px;">
+                                    <option value="">All cell lines/tissues</option>
+                                </select>
+                                <label for="batch-tfbs-type-select" style="white-space:nowrap; font-weight:bold; margin:0; margin-left:12px;">TFBS Type:</label>
+                                <select id="batch-tfbs-type-select" name="tfbs_type" style="padding:4px 8px; font-size:13px; border:1px solid #ccc; border-radius:4px; min-width:200px; max-width:270px;">
+                                    <option value="all">TFBS / Predicted TFBS (all)</option>
+                                    <option value="chip">TFBS (ChIP-seq)</option>
+                                    <option value="predicted">Predicted TFBS (ATAC-seq, DNase-seq)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" id="file-search-button">Upload & Search</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="examples">
+                {% for example in examples %}
+                <p>{{ example }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2026 TFBSpedia - A Database for Transcription Factor Binding Sites</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        // Toggle between text search and file upload
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchTypeInputs = document.querySelectorAll('input[name="search_type"]');
+            const textSearchSection = document.getElementById('text-search-section');
+            const fileUploadSection = document.getElementById('file-upload-section');
+
+            searchTypeInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    if (this.value === 'text') {
+                        textSearchSection.classList.add('active');
+                        fileUploadSection.classList.remove('active');
+                    } else if (this.value === 'file') {
+                        textSearchSection.classList.remove('active');
+                        fileUploadSection.classList.add('active');
+                    }
+                });
+            });
+
+            // Initialize autocomplete functionality
+            initializeAutocomplete();
+
+            // Load cell tissues on page load for both sections
+            loadCellTissues();
+            loadBatchCellTissues();
+
+            // Reload when text-search species changes
+            document.querySelectorAll('#text-search-section input[name="species"]').forEach(function(radio) {
+                radio.addEventListener('change', loadCellTissues);
+            });
+
+            // Reload when batch species changes
+            document.querySelectorAll('#file-upload-section input[name="species"]').forEach(function(radio) {
+                radio.addEventListener('change', loadBatchCellTissues);
+            });
+        });
+
+        function toggleAdvancedSearch(section) {
+            if (section === 'text') {
+                const panel = document.getElementById('text-advanced-search');
+                const btn = document.getElementById('advanced-toggle-btn');
+                const open = panel.style.display !== 'none';
+                panel.style.display = open ? 'none' : 'block';
+                btn.innerHTML = (open ? '&#9654;' : '&#9660;') + ' Advanced Search Options';
+            } else {
+                const panel = document.getElementById('batch-advanced-search');
+                const btn = document.getElementById('batch-advanced-toggle-btn');
+                const open = panel.style.display !== 'none';
+                panel.style.display = open ? 'none' : 'block';
+                btn.innerHTML = (open ? '&#9654;' : '&#9660;') + ' Advanced Search Options';
+            }
+        }
+
+        function loadCellTissues() {
+            const speciesInput = document.querySelector('#text-search-section input[name="species"]:checked');
+            const species = speciesInput ? speciesInput.value : 'human';
+            const select = document.getElementById('cell-line-select');
+            const previousValue = select.value;
+
+            fetch('/api/cell-tissues/?species=' + encodeURIComponent(species))
+                .then(response => response.json())
+                .then(data => {
+                    select.innerHTML = '<option value="">All cell lines/tissues</option>';
+                    if (data.success && data.cell_tissues) {
+                        data.cell_tissues.forEach(function(ct) {
+                            const option = document.createElement('option');
+                            option.value = ct;
+                            option.textContent = ct;
+                            if (ct === previousValue) option.selected = true;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Error loading cell tissues:', err);
+                });
+        }
+
+        function loadBatchCellTissues() {
+            const speciesInput = document.querySelector('#file-upload-section input[name="species"]:checked');
+            const species = speciesInput ? speciesInput.value : 'human';
+            const select = document.getElementById('batch-cell-line-select');
+            const previousValue = select.value;
+
+            fetch('/api/cell-tissues/?species=' + encodeURIComponent(species))
+                .then(response => response.json())
+                .then(data => {
+                    select.innerHTML = '<option value="">All cell lines/tissues</option>';
+                    if (data.success && data.cell_tissues) {
+                        data.cell_tissues.forEach(function(ct) {
+                            const option = document.createElement('option');
+                            option.value = ct;
+                            option.textContent = ct;
+                            if (ct === previousValue) option.selected = true;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Error loading cell tissues:', err);
+                });
+        }
+        
+        // Autocomplete functionality
+        let autocompleteTimeout;
+        let selectedIndex = -1;
+        let currentSuggestions = [];
+        
+        function initializeAutocomplete() {
+            const searchInput = document.getElementById('search-input');
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            
+            // Handle input changes
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                
+                // Clear previous timeout
+                if (autocompleteTimeout) {
+                    clearTimeout(autocompleteTimeout);
+                }
+                
+                // Only search if query is at least 2 characters or empty
+                if (query.length >= 2 || query.length === 0) {
+                    autocompleteTimeout = setTimeout(() => {
+                        fetchTFSuggestions(query);
+                    }, 300); // Debounce for 300ms
+                } else {
+                    hideDropdown();
+                }
+            });
+            
+            // Handle keyboard navigation
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateDropdown(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateDropdown(-1);
+                } else if (e.key === 'Enter') {
+                    if (selectedIndex >= 0 && currentSuggestions.length > 0) {
+                        e.preventDefault();
+                        selectSuggestion(currentSuggestions[selectedIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    hideDropdown();
+                }
+            });
+            
+            // Handle clicks outside dropdown
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    hideDropdown();
+                }
+            });
+        }
+        
+        function fetchTFSuggestions(query) {
+            const species = document.querySelector('input[name="species"]:checked').value;
+            
+            fetch(`/api/tf-names/?query=${encodeURIComponent(query)}&species=${species}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSuggestions(data.tf_names);
+                    } else {
+                        console.error('Error fetching suggestions:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching suggestions:', error);
+                });
+        }
+        
+        function showSuggestions(suggestions) {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            const searchInput = document.getElementById('search-input');
+            
+            if (suggestions.length === 0) {
+                hideDropdown();
+                return;
+            }
+            
+            currentSuggestions = suggestions;
+            selectedIndex = -1;
+            
+            // Create dropdown items
+            dropdown.innerHTML = '';
+            suggestions.forEach((suggestion, index) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = suggestion;
+                item.dataset.index = index;
+                
+                item.addEventListener('click', () => {
+                    selectSuggestion(suggestion);
+                });
+                
+                item.addEventListener('mouseenter', () => {
+                    selectedIndex = index;
+                    updateSelection();
+                });
+                
+                dropdown.appendChild(item);
+            });
+            
+            // Show dropdown
+            dropdown.style.display = 'block';
+        }
+        
+        function hideDropdown() {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            dropdown.style.display = 'none';
+            selectedIndex = -1;
+            currentSuggestions = [];
+        }
+        
+        function navigateDropdown(direction) {
+            if (currentSuggestions.length === 0) return;
+            
+            selectedIndex += direction;
+            
+            if (selectedIndex >= currentSuggestions.length) {
+                selectedIndex = 0;
+            } else if (selectedIndex < 0) {
+                selectedIndex = currentSuggestions.length - 1;
+            }
+            
+            updateSelection();
+        }
+        
+        function updateSelection() {
+            const items = document.querySelectorAll('.autocomplete-item');
+            items.forEach((item, index) => {
+                if (index === selectedIndex) {
+                    item.classList.add('selected');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+        
+        function selectSuggestion(suggestion) {
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = suggestion;
+            hideDropdown();
+            searchInput.focus();
+        }
+    </script>
+</body>
+</html>

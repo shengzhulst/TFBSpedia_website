@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TFBSpedia - Evaluation Metrics</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #f8f9fa; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        .section { 
+            background: #fff; 
+            border-radius: 8px; 
+            padding: 24px; 
+            margin-bottom: 24px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        }
+        .section-title { 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+            margin-bottom: 20px; 
+            color: #6a1b9a; 
+            border-bottom: 2px solid #6a1b9a;
+            padding-bottom: 10px;
+        }
+        .subsection-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 20px 0 15px;
+            color: #4a148c;
+        }
+        .metric-card {
+            border-left: 4px solid #6a1b9a;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+        }
+        .score-range {
+            font-weight: bold;
+            color: #6a1b9a;
+        }
+        .criteria-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .criteria-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .criteria-list li:last-child {
+            border-bottom: none;
+        }
+        .example-box {
+            background-color: #f1f8e9;
+            border: 1px solid #c5e1a5;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="mb-4">
+            <h1 class="section-title">TFBS Evaluation Metrics</h1>
+        </header>
+
+        <!-- Introduction Section -->
+        <div class="section">
+            <h2 class="subsection-title">Introduction</h2>
+            <p>
+                TFBSpedia uses two key metrics to evaluate a single transcription factor binding site (TFBS) region: the Confident Score and the Important Score. 
+                These scores help researchers assess the reliability and biological significance of a predicted TFBS region.
+            </p>
+        </div>
+
+        <!-- Confident Score Section -->
+        <div class="section">
+            <h2 class="subsection-title">Confident Score</h2>
+            <div class="metric-card">
+                <p>
+                    The Confident Score measures the reliability of a TFBS prediction, indicating how confident we are 
+                    that the region represents a true transcription factor binding site.
+                </p>
+                <p class="score-range">Score Range: 0-8 (Human) / 0-4 (Mouse)</p>    
+                <h4 class="mt-4">Calculation formula:</h4>
+
+                <p>
+        <span style="color: #6a1b9a; font-weight: bold;">Confident Score</span> = <span style="color: #6a1b9a;">Number of sources that support the TFBS prediction </span>  + <span style="color: #6a1b9a;">Number of sequencing techniques that support the TFBS prediction</span>
+                    <br>
+                    <br>
+                    Five sources are considered: <u>UM, factorbook, RegulomeDB, Unibind, ENCODE footprint</u>
+                    <br>
+                    <br>
+                    Three sequencing techniques are considered: <u>ChIP-seq, ATAC-seq, and DNase-seq</u>
+                    <br>
+                    <br>
+                </p>
+
+                <div class="example-box">
+                    <h5>Interpretation:</h5>
+                    <ul>
+                        <li><strong>Human:</strong> Score 5-8: Highly confident prediction, Score 3-4: Moderately confident prediction, Score 0-2: Low confidence prediction</li>
+                        <li><strong>Mouse:</strong> Score 3-4: Highly confident prediction, Score 2: Moderately confident prediction, Score 0-1: Low confidence prediction</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Important Score Section -->
+        <div class="section">
+            <h2 class="subsection-title">Important Score</h2>
+            <div class="metric-card">
+                <p>
+                    The Important Score evaluates the biological significance of a TFBS region, considering various 
+                    existed annotations that indicate its potential role in gene regulation.
+                </p>
+                <p class="score-range">Score Range: 0-7 (Human) / 0-4 (Mouse)</p>
+
+            <h4 class="mt-4">Calculation formula:</h4>
+            <p>
+<span style="color: #6a1b9a; font-weight: bold;">Important Score</span> = <span style="color: #6a1b9a;">TFBS in annotated regulatory elements(promoter, enhancers)</span>  + <span style="color: #6a1b9a;">DNA methylation changes across tissues</span> + <span style="color: #6a1b9a;">Codebook annotations</span>+ <span style="color: #6a1b9a;"> a variant(GWAS, eQTL)</span>+ <span style="color: #6a1b9a;"> a histone modification peak</span>
++ <span style="color: #6a1b9a;">an ENCODE annotation(cCREs,rE2G)</span>+ <span style="color: #6a1b9a;">in a Transposable element</span> - <span style="color: #6a1b9a;">in the ENCODE blacklist</span>
+                    <br>
+                    <br>
+                    <br>
+                </p>
+
+                <div class="example-box">
+                    <h5>Example Interpretation:</h5>
+                    <ul>
+                        <li><strong>Human:</strong> Score 5-7: Highly important region, Score 3-4: Moderately important region, Score 0-2: Low importance region</li>
+                        <li><strong>Mouse:</strong> Score 3-4: Highly important region, Score 2: Moderately important region, Score 0-1: Low importance region</li>
+                    </ul>
+                </div>
+            </div>
+        </div>

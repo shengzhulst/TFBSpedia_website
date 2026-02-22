@@ -1,0 +1,423 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TFBSpedia - TFBS Details</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body { background-color: #f5f5f5; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .section { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+        .section-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 16px; color: #6a1b9a; }
+        .score-bar { height: 24px; border-radius: 12px; background: linear-gradient(90deg, #1976d2, #e53935); margin-bottom: 8px; }
+        .score-label {
+            margin-bottom: 1.2rem;
+        }
+        .score-marker {
+            position: absolute;
+            top: -20px;
+            transform: translateX(-50%);
+            color: #00ff00;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        .score-value {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 500;
+        }
+        .table thead { background: #6a1b9a; color: #fff; }
+        .table td, .table th { vertical-align: middle; }
+        .position-relative {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        /* Draggable window styles */
+        .draggable-window {
+            position: absolute;
+            background: white;
+            border: 2px solid #6a1b9a;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 300px;
+            max-width: 400px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .window-header {
+            background: #6a1b9a;
+            color: white;
+            padding: 10px 15px;
+            cursor: move;
+            border-radius: 6px 6px 0 0;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .window-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .item-row {
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #6a1b9a;
+        }
+        
+        .item-row:hover {
+            background: #e9ecef;
+        }
+        
+        .show-window-btn {
+            background: #6a1b9a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .show-window-btn:hover {
+            background: #5a1a8a;
+        }
+        
+        .info-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .proportion-info {
+            color: #666;
+            font-size: 14px;
+            margin-left: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="mb-4">
+            <h1 class="section-title">
+                <a href="javascript:history.back()" style="color: inherit; text-decoration: none;">
+                    TFBS Region Details
+                </a>
+            </h1>
+        </header>
+        <div class="section mb-4">
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Chr:</strong> <span id="chr-val">{{ chr }}</span></div>
+                <div class="col-md-4"><strong>Start:</strong> <span id="start-val">{{ start }}</span></div>
+                <div class="col-md-4"><strong>End:</strong> <span id="end-val">{{ end }}</span></div>
+            </div>
+            <hr class="my-3">
+            
+            <!-- Cell/Tissue Section -->
+            <div class="info-section">
+                <strong>Cell/Tissue:</strong>
+                <button class="show-window-btn" onclick="showWindow('cell-tissue-window')">
+                    View Cell/Tissue Details
+                </button>
+                <span class="proportion-info">({{ proportion_info.cell_tissue }})</span>
+            </div>
+            
+            <!-- TF Name Section -->
+            <div class="info-section">
+                <strong>TF Name:</strong>
+                <button class="show-window-btn" onclick="showWindow('tf-name-window')">
+                    View TF Names
+                </button>
+                <span class="proportion-info">({{ proportion_info.tf_names }})</span>
+            </div>
+            
+            <!-- Predicted TF Name Section -->
+            <div class="info-section">
+                <strong>Predicted TF Name:</strong>
+                <button class="show-window-btn" onclick="showWindow('pred-tf-name-window')">
+                    View Predicted TF Names
+                </button>
+                <span class="proportion-info">({{ proportion_info.predicted_tf_names }})</span>
+            </div>
+            
+            <hr class="my-3">
+            <div class="row mb-2">
+                <div class="col-md-12">
+                    <div class="score-label">
+                        Confident Score (max: {% if request.GET.species == 'mouse' %}4{% else %}8{% endif %})
+                        <a href="{% url 'evaluation_metrics' %}" class="btn btn-sm btn-outline-secondary ms-2" target="_blank">
+                            Learn more about scores
+                        </a>
+                    </div>
+                    <div class="position-relative">
+                        <div class="score-bar" id="confident-score-bar"></div>
+                        {% if confident_score %}
+                        <div class="score-marker" style="left: calc({{ confident_score.0.0|default:0 }} * {% if request.GET.species == 'mouse' %}25{% else %}12.5{% endif %}%);">▼</div>
+                        {% endif %}
+                        <div class="score-value text-center mt-1">
+                            {% if confident_score %}
+                            Score: {{ confident_score.0.0|floatformat:2 }}
+                            {% else %}
+                            Score: -
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="score-label">
+                        Important Score (max: {% if request.GET.species == 'mouse' %}4{% else %}7{% endif %})
+                        <a href="{% url 'evaluation_metrics' %}" class="btn btn-sm btn-outline-secondary ms-2" target="_blank">
+                            Learn more about scores
+                        </a>
+                    </div>
+                    <div class="position-relative">
+                        <div class="score-bar" id="important-score-bar"></div>
+                        {% if important_score %}
+                        <div class="score-marker" style="left: calc({{ important_score.0.0|default:0 }} * {% if request.GET.species == 'mouse' %}25{% else %}14.28{% endif %}%);">▼</div>
+                        {% endif %}
+                        <div class="score-value text-center mt-1">
+                            {% if important_score %}
+                            Score: {{ important_score.0.0|floatformat:2 }}
+                            {% else %}
+                            Score: -
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Draggable Windows -->
+        <div id="cell-tissue-window" class="draggable-window">
+            <div class="window-header" onmousedown="startDrag(event, 'cell-tissue-window')">
+                Cell/Tissue Information
+                <button class="close-btn" onclick="closeWindow('cell-tissue-window')">&times;</button>
+            </div>
+            <div class="window-content" id="cell-tissue-content">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div id="tf-name-window" class="draggable-window">
+            <div class="window-header" onmousedown="startDrag(event, 'tf-name-window')">
+                TF Name Information
+                <button class="close-btn" onclick="closeWindow('tf-name-window')">&times;</button>
+            </div>
+            <div class="window-content" id="tf-name-content">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div id="pred-tf-name-window" class="draggable-window">
+            <div class="window-header" onmousedown="startDrag(event, 'pred-tf-name-window')">
+                Predicted TF Name Information
+                <button class="close-btn" onclick="closeWindow('pred-tf-name-window')">&times;</button>
+            </div>
+            <div class="window-content" id="pred-tf-name-content">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Overlap Annotations</div>
+            <button id="download-annotations-btn" class="btn btn-primary mb-3">Download Overlap Annotations</button>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Chr</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Extra Information</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if overlap_annotations %}
+                        {% for annotation in overlap_annotations %}
+                            <tr>
+                                <td>{% if annotation.type == 'Cookbook_ChIP' %}Codebook_ChIP{% elif annotation.type == 'Cookbook_GHT_SELEX' %}Codebook_GHT_SELEX{% else %}{{ annotation.type }}{% endif %}</td>
+                                <td>{{ annotation.chr }}</td>
+                                <td>{{ annotation.start }}</td>
+                                <td>{{ annotation.end }}</td>
+                                <td>{{ annotation.extra }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="5" class="text-center">No overlap annotations found for this region.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const downloadBtn = document.getElementById('download-annotations-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                const table = downloadBtn.nextElementSibling;
+                let csv = '';
+                // Get headers
+                const headers = table.querySelectorAll('thead th');
+                let headerRow = [];
+                headers.forEach(th => headerRow.push('"' + th.innerText.replace(/"/g, '""') + '"'));
+                csv += headerRow.join(',') + '\n';
+                // Get rows
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(tr => {
+                    const cells = tr.querySelectorAll('td');
+                    let row = [];
+                    cells.forEach(td => row.push('"' + td.innerText.replace(/"/g, '""') + '"'));
+                    csv += row.join(',') + '\n';
+                });
+                // Download
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'overlap_annotations.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+        
+        // Initialize window content with data
+        initializeWindowContent();
+    });
+    
+    // Function to populate window content
+    function initializeWindowContent() {
+        // Cell/Tissue data
+        const cellTissueData = "{{ cell_tissue_info|default:'' }}";
+        const cellTissueItems = cellTissueData ? cellTissueData.split(',').map(item => item.trim()).filter(item => item) : [];
+        populateWindow('cell-tissue-content', cellTissueItems, 'No cell/tissue information available');
+        updateButtonCount('cell-tissue-window', cellTissueItems.length);
+        
+        // TF Name data
+        const tfNameData = "{{ tfbs|default:'' }}";
+        const tfNameItems = tfNameData ? tfNameData.split(',').map(item => item.trim()).filter(item => item) : [];
+        populateWindow('tf-name-content', tfNameItems, 'No TF name information available');
+        updateButtonCount('tf-name-window', tfNameItems.length);
+        
+        // Predicted TF Name data
+        const predTfNameData = "{{ predicted_tfbs|default:'' }}";
+        const predTfNameItems = predTfNameData ? predTfNameData.split(',').map(item => item.trim()).filter(item => item) : [];
+        populateWindow('pred-tf-name-content', predTfNameItems, 'No predicted TF name information available');
+        updateButtonCount('pred-tf-name-window', predTfNameItems.length);
+    }
+    
+    // Function to populate window content
+    function populateWindow(contentId, items, noDataMessage) {
+        const content = document.getElementById(contentId);
+        if (items.length === 0) {
+            content.innerHTML = `<div class="item-row">${noDataMessage}</div>`;
+        } else {
+            content.innerHTML = items.map(item => `<div class="item-row">${item}</div>`).join('');
+        }
+    }
+    
+    // Function to update button count
+    function updateButtonCount(windowId, count) {
+        const buttons = document.querySelectorAll(`[onclick="showWindow('${windowId}')"]`);
+        buttons.forEach(button => {
+            const currentText = button.textContent;
+            const newText = currentText.replace(/\(\d+ items?\)/, `(${count} items)`);
+            button.textContent = newText;
+        });
+    }
+    
+    // Draggable window functionality
+    let isDragging = false;
+    let currentWindow = null;
+    let offsetX, offsetY;
+    
+    function showWindow(windowId) {
+        const window = document.getElementById(windowId);
+        if (window) {
+            window.style.display = 'block';
+            // Position window in center of screen
+            window.style.left = '50%';
+            window.style.top = '50%';
+            window.style.transform = 'translate(-50%, -50%)';
+        }
+    }
+    
+    function closeWindow(windowId) {
+        const window = document.getElementById(windowId);
+        if (window) {
+            window.style.display = 'none';
+        }
+    }
+    
+    function startDrag(event, windowId) {
+        isDragging = true;
+        currentWindow = document.getElementById(windowId);
+        const rect = currentWindow.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+        event.preventDefault();
+    }
+    
+    function onMouseMove(event) {
+        if (isDragging && currentWindow) {
+            const x = event.clientX - offsetX;
+            const y = event.clientY - offsetY;
+            currentWindow.style.left = x + 'px';
+            currentWindow.style.top = y + 'px';
+            currentWindow.style.transform = 'none';
+        }
+    }
+    
+    function onMouseUp() {
+        isDragging = false;
+        currentWindow = null;
+    }
+    
+    // Add event listeners for dragging
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    
+    // Close windows when clicking outside
+    document.addEventListener('click', function(event) {
+        const windows = document.querySelectorAll('.draggable-window');
+        windows.forEach(window => {
+            if (!window.contains(event.target) && window.style.display === 'block') {
+                // Don't close if clicking on show window buttons
+                if (!event.target.classList.contains('show-window-btn')) {
+                    window.style.display = 'none';
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html> 
