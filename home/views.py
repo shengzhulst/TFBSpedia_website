@@ -6,7 +6,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .serializers import TFBSSerializer
 import csv
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.contrib import messages
 from django.urls import reverse
 from django.http import JsonResponse
@@ -221,6 +221,166 @@ class TFBSViewSet(viewsets.ViewSet):
                 'details': error_details if settings.DEBUG else "See server logs for details"
             }, status=status.HTTP_200_OK)  # Return 200 so DataTables can display the error
 
+# ---------------------------------------------------------------------------
+# CSV downloads
+#
+# A download is unbounded -- a single TF such as ESR1 matches over a million
+# regions -- so nothing here collects rows into a list or buffers the CSV in
+# the response.  Doing either used to push the request past the reverse proxy's
+# timeout and return "502 Proxy Error".
+# ---------------------------------------------------------------------------
+
+DOWNLOAD_CSV_HEADER = ['Chromosome', 'Start', 'End', 'ID', 'Confident_Score', 'Important_Score']
+
+# IDs taken from the ID cursor, and rows fetched, per round trip.  Keeping this
+# small is what makes the row query a nested loop of index scans, which starts
+# returning immediately, rather than a hash join that has to scan the 69M row
+# position table and both score tables before emitting anything.
+DOWNLOAD_CHUNK_SIZE = 10000
+
+
+class _CsvEcho:
+    """Minimal file-like sink so csv.writer hands each row back as a string."""
+
+    def write(self, value):
+        return value
+
+
+def _tf_name_ids_sql(tf_names, tfbs_type):
+    """
+    Build a query selecting the distinct "TFBS_position" IDs bound by any of
+    tf_names, in ID order, plus its parameters.
+
+    Each UNION branch filters on a single "TFBS_name" column so it can be
+    served by that column's ("column", "ID") index as an index-only scan whose
+    output is already sorted -- the two branches then merge, no sort needed.
+    A combined '"TFBS" = %s OR "predicted_TFBS" = %s' filter can use neither
+    index and degrades into a full scan of the 200M+ row table.
+    See instruction/sql_index_for_downloads.sql for the indexes.
+    """
+    placeholders = ','.join(['%s'] * len(tf_names))
+    branches, params = [], []
+    if tfbs_type != 'predicted':
+        branches.append(f'SELECT "ID" FROM "TFBS_name" WHERE "TFBS" IN ({placeholders})')
+        params += list(tf_names)
+    if tfbs_type != 'chip':
+        branches.append(f'SELECT "ID" FROM "TFBS_name" WHERE "predicted_TFBS" IN ({placeholders})')
+        params += list(tf_names)
+    # UNION, not UNION ALL: a region matched by both columns is emitted once.
+    return '\nUNION\n'.join(branches), params
+
+
+def _locations_ids_sql(locations):
+    """
+    Build a query selecting the "TFBS_position" IDs inside any of locations, a
+    list of (chromosome, start, end) tuples.  A None start or end means "the
+    whole chromosome".
+    """
+    branches, params = [], []
+    for chromosome, start, end in locations:
+        if start is None or end is None:
+            branches.append('"seqnames" = %s')
+            params += [chromosome]
+        else:
+            branches.append('("seqnames" = %s AND "start" >= %s AND "end" <= %s)')
+            params += [chromosome, start, end]
+    return f'SELECT "ID" FROM "TFBS_position" WHERE {" OR ".join(branches)}', params
+
+
+def _download_rows_sql(chromosome=None):
+    """SQL returning the CSV columns for one chunk of "TFBS_position" IDs."""
+    # The score tables are joined here instead of being looked up afterwards:
+    # the previous implementation gathered every ID first and then issued an
+    # IN (...) list holding one literal per row, which for ESR1 meant a single
+    # statement carrying more than a million literals.
+    return f'''
+        SELECT p."seqnames", p."start", p."end", p."ID",
+               c."confident_score", i."importance_score"
+        FROM "TFBS_position" p
+        LEFT JOIN "tfbs_confident_score"  c ON c."id" = p."ID"
+        LEFT JOIN "tfbs_importance_score" i ON i."id" = p."ID"
+        WHERE p."ID" = ANY(%s)
+        {'AND p."seqnames" = %s' if chromosome else ''}
+        ORDER BY p."ID"
+    '''
+
+
+def _stream_download_csv(db_alias, ids_sql, ids_params, filename,
+                         chromosome=None, allowed_ids=None):
+    """
+    Stream a CSV attachment holding one row per region selected by ids_sql.
+
+    Deliberately two phases.  A server-side cursor walks the matching IDs in ID
+    order, and each chunk of them is resolved to positions and scores by its own
+    small query, so bytes reach the client within a second and keep flowing --
+    a single joined query over a million IDs is planned as hash joins over the
+    full tables and returns nothing at all for half a minute.
+
+    Regions sharing exact coordinates are collapsed to one row, matching what
+    the paginated search reports.  Such regions are usually but not always
+    neighbours in ID order, so the coordinates seen so far are tracked in full;
+    packing each one into a single int keeps that to a few tens of MB even for
+    the largest TF, against the gigabyte the old collect-everything version
+    needed.
+    """
+    allowed = set(allowed_ids) if allowed_ids is not None else None
+    rows_sql = _download_rows_sql(chromosome)
+    rows_params_tail = [chromosome] if chromosome else []
+
+    # Declared outside the generator so a bad statement raises before any bytes
+    # have been written, leaving only the fetching to response iteration.
+    id_cursor = connections[db_alias].chunked_cursor()
+    id_cursor.itersize = DOWNLOAD_CHUNK_SIZE
+    try:
+        id_cursor.execute(f'SELECT "ID" FROM ({ids_sql}) src ORDER BY "ID"', ids_params)
+    except Exception:
+        id_cursor.close()
+        raise
+
+    def rows():
+        writer = csv.writer(_CsvEcho())
+        yield writer.writerow(DOWNLOAD_CSV_HEADER)
+        seen = set()
+        chromosome_ids = {}
+        try:
+            with connections[db_alias].cursor() as cursor:
+                while True:
+                    ids = [row[0] for row in id_cursor.fetchmany(DOWNLOAD_CHUNK_SIZE)]
+                    if not ids:
+                        break
+                    if allowed is not None:
+                        ids = [i for i in ids if i in allowed]
+                        if not ids:
+                            continue
+                    cursor.execute(rows_sql, [ids] + rows_params_tail)
+                    for seqnames, start, end, tfbs_id, confident, important in cursor.fetchall():
+                        chromosome_id = chromosome_ids.setdefault(seqnames, len(chromosome_ids))
+                        key = (chromosome_id << 64) | (start << 32) | end
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        yield writer.writerow([
+                            seqnames, start, end, tfbs_id,
+                            '' if confident is None else confident,
+                            '' if important is None else important,
+                        ])
+        finally:
+            # Also reached when the client disconnects part way through.
+            id_cursor.close()
+
+    response = StreamingHttpResponse(rows(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+def _empty_download_csv(filename):
+    """A header-only CSV, for filters that cannot match anything."""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    csv.writer(response).writerow(DOWNLOAD_CSV_HEADER)
+    return response
+
+
 def download_results(request):
     query = request.GET.get('query', '')
     species = request.GET.get('species', 'human')
@@ -230,49 +390,21 @@ def download_results(request):
 
     db_alias = 'human' if species == 'human' else 'mouse'
 
-    # Use your existing search logic, but fetch ALL results (no pagination)
+    allowed_ids = None
+    if cell_line:
+        allowed_ids = load_cell_line_ids(species, cell_line)
+        if not allowed_ids:
+            return _empty_download_csv('search_results.csv')
+
     if is_genomic_location(query):
-        chrom, start, end = parse_genomic_location(query)
-        results, _ = search_by_location(db_alias, chrom, start, end, request, no_pagination=True, cell_line=cell_line)
+        ids_sql, ids_params = _locations_ids_sql([parse_genomic_location(query)])
     else:
-        results, _ = search_by_tf_name(db_alias, query, request, no_pagination=True, cell_line=cell_line, tfbs_type=tfbs_type)
+        ids_sql, ids_params = _tf_name_ids_sql([query], tfbs_type)
 
-    # Optionally filter by chromosome
-    if chromosome:
-        results = [r for r in results if r.get('seqnames') == chromosome or r.get('chromosome') == chromosome]
-
-    # Get score information for all results
-    if results:
-        id_list = [result['ID'] for result in results]
-        scores_dict = download_gather_scores(id_list, species)
-        
-        # Add score information to each result
-        for result in results:
-            tfbs_id = result['ID']
-            if tfbs_id in scores_dict:
-                result['confident_score'] = scores_dict[tfbs_id]['confident_score']
-                result['important_score'] = scores_dict[tfbs_id]['important_score']
-            else:
-                result['confident_score'] = None
-                result['important_score'] = None
-
-    # Create CSV response
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="search_results.csv"'
-    writer = csv.writer(response)
-    if results:
-        # Write header with score columns
-        writer.writerow(['Chromosome', 'Start', 'End', 'ID', 'Confident_Score', 'Important_Score'])
-        for row in results:
-            writer.writerow([
-                row.get('seqnames', ''),
-                row.get('start', ''),
-                row.get('end', ''),
-                row.get('ID', ''),
-                row.get('confident_score', ''),
-                row.get('important_score', '')
-            ])
-    return response
+    return _stream_download_csv(
+        db_alias, ids_sql, ids_params, 'search_results.csv',
+        chromosome=chromosome, allowed_ids=allowed_ids,
+    )
 
 def gather_tfbs_names(pk, species='human'):
     """
@@ -1370,50 +1502,12 @@ def parse_batch_file(file_content):
     print(queries)
     return queries
 
-def download_gather_scores(id_list, species='human'):
-    """
-    Fetch confident and important scores for a list of TFBS regions (by IDs).
-    Returns a dictionary mapping ID to scores.
-    """
-    db_alias = 'human' if species == 'human' else 'mouse'
-    from django.db import connections
-    scores_dict = {}
-    
-    with connections[db_alias].cursor() as cursor:
-        # Get confident scores for all IDs
-        if id_list:
-            placeholders = ','.join(['%s'] * len(id_list))
-            cursor.execute(f'''
-                SELECT "id", "confident_score"
-                FROM "tfbs_confident_score"
-                WHERE "id" IN ({placeholders})
-            ''', id_list)
-            confident_scores = cursor.fetchall()
-            
-            # Get important scores for all IDs
-            cursor.execute(f'''
-                SELECT "id", "importance_score"
-                FROM "tfbs_importance_score"
-                WHERE "id" IN ({placeholders})
-            ''', id_list)
-            important_scores = cursor.fetchall()
-            
-            # Create a dictionary to store scores by ID
-            confident_dict = {row[0]: row[1] for row in confident_scores}
-            important_dict = {row[0]: row[1] for row in important_scores}
-            
-            # Combine scores for each ID
-            for tfbs_id in id_list:
-                scores_dict[tfbs_id] = {
-                    'confident_score': confident_dict.get(tfbs_id),
-                    'important_score': important_dict.get(tfbs_id)
-                }
-    
-    return scores_dict
-
 def download_batch_results(request):
     """
     Download batch search results as CSV.
+
+    Streamed the same way as download_results: a batch of TF names easily adds
+    up to several million regions, so the rows are never materialised.
     """
     file_content = request.session.get('batch_file_content', '')
     species = request.GET.get('species', 'human')
@@ -1426,68 +1520,43 @@ def download_batch_results(request):
     db_alias = 'human' if species == 'human' else 'mouse'
 
     try:
-        # Parse queries and execute batch search (no pagination for downloads)
         queries = parse_batch_file(file_content)
 
         # Separate TF names and genomic locations
         tf_names = []
         locations = []
-
         for query in queries:
             if is_genomic_location(query):
-                chrom, start, end = parse_genomic_location(query)
-                locations.append((chrom, start, end))
+                locations.append(parse_genomic_location(query))
             else:
                 tf_names.append(query)
 
-        # Execute batch searches (no pagination)
-        all_results = []
-
-        # Process TF names in batch
+        # One UNION-ed source so both kinds of query stream out of a single
+        # ID-ordered scan, with regions matched twice emitted once.
+        sources, source_params = [], []
         if tf_names:
-            tf_results, _ = batch_search_by_tf_name(db_alias, tf_names, request, no_pagination=True, cell_line=cell_line, tfbs_type=tfbs_type)
-            all_results.extend(tf_results)
-
-        # Process genomic locations in batch
+            sql, params = _tf_name_ids_sql(tf_names, tfbs_type)
+            sources.append(sql)
+            source_params += params
         if locations:
-            location_results, _ = batch_search_by_location(db_alias, locations, request, no_pagination=True, cell_line=cell_line)
-            all_results.extend(location_results)
-        
-        # Get score information for all results
-        if all_results:
-            id_list = [result['ID'] for result in all_results]
-            scores_dict = download_gather_scores(id_list, species)
-            
-            # Add score information to each result
-            for result in all_results:
-                tfbs_id = result['ID']
-                if tfbs_id in scores_dict:
-                    result['confident_score'] = scores_dict[tfbs_id]['confident_score']
-                    result['important_score'] = scores_dict[tfbs_id]['important_score']
-                else:
-                    result['confident_score'] = None
-                    result['important_score'] = None
-        
-        # Create CSV response
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="batch_search_results.csv"'
-        writer = csv.writer(response)
-        
-        if all_results:
-            # Write header with score columns
-            writer.writerow(['Chromosome', 'Start', 'End', 'ID', 'Confident_Score', 'Important_Score'])
-            for row in all_results:
-                writer.writerow([
-                    row.get('seqnames', ''),
-                    row.get('start', ''),
-                    row.get('end', ''),
-                    row.get('ID', ''),
-                    row.get('confident_score', ''),
-                    row.get('important_score', '')
-                ])
-        
-        return response
-        
+            sql, params = _locations_ids_sql(locations)
+            sources.append(sql)
+            source_params += params
+
+        if not sources:
+            return HttpResponse("No batch search data available", status=400)
+
+        allowed_ids = None
+        if cell_line:
+            allowed_ids = load_cell_line_ids(species, cell_line)
+            if not allowed_ids:
+                return _empty_download_csv('batch_search_results.csv')
+
+        return _stream_download_csv(
+            db_alias, '\nUNION\n'.join(sources), source_params,
+            'batch_search_results.csv', allowed_ids=allowed_ids,
+        )
+
     except Exception as e:
         return HttpResponse(f"Error generating CSV: {str(e)}", status=500)
 
