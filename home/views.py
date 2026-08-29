@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.db import connections
 from django.conf import settings
-import re, traceback, io, pickle
+import re, traceback, io, json, pickle
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .serializers import TFBSSerializer
@@ -128,6 +128,34 @@ def get_tf_count_from_csv(species, cell_tissue, tf_name, tfbs_type='all'):
     counts = mapping.get((cell_tissue, tf_name), {'all': 0, 'chip': 0, 'predicted': 0})
     return counts.get(tfbs_type, 0)
 
+# Module-level cache for the home page summary statistics: species -> dict/None
+_database_stats_cache = {}
+
+def load_database_stats(species):
+    """
+    Load the pre-computed "Database at a glance" statistics for one species.
+
+    Built by instruction/make_database_stats.py, which aggregates tens of
+    millions of rows -- far too slow to do per request.  Returns None when the
+    file is missing so the home page simply omits the section.
+    """
+    if species in _database_stats_cache:
+        return _database_stats_cache[species]
+
+    path = os.path.join('staticfiles', 'documents', f'database_stats_{species}.json')
+    stats = None
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                stats = json.load(f)
+        except (OSError, ValueError) as e:
+            print(f'[stats] could not read {path}: {e}')
+    else:
+        print(f'[stats] {path} not found; run instruction/make_database_stats.py')
+
+    _database_stats_cache[species] = stats
+    return stats
+
 def _get_name_condition_and_params(tf_name, tfbs_type):
     """Return (condition_sql_fragment, params_list) for TFBS_name filtering."""
     if tfbs_type == 'chip':
@@ -138,11 +166,18 @@ def _get_name_condition_and_params(tf_name, tfbs_type):
         return '(n."TFBS" = %s OR n."predicted_TFBS" = %s)', [tf_name, tf_name]
 
 def index(request):
+    # Both species are sent to the page so its Human/Mouse toggle can switch
+    # without a round trip; together they are only a few KB.
+    database_stats = {
+        species: stats
+        for species in ('human', 'mouse')
+        if (stats := load_database_stats(species))
+    }
     context = {
-        'examples': ['Example search: chr1,10000,20000', 'Example search: FOXP3'],
         'motif_info_url': '/motif-info/',
         'benchmark_url': '/benchmark-info/',
-        'genome_browser_url': '/genome-browser/'
+        'genome_browser_url': '/genome-browser/',
+        'database_stats': database_stats,
     }
     return render(request, 'pages/index.html', context)
 

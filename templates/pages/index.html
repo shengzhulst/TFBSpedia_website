@@ -135,11 +135,6 @@
         #file-search-button:hover {
             background-color: #45a049;
         }
-        .examples {
-            margin: 20px 0;
-            font-size: 16px;
-            color: #666;
-        }
         footer {
             text-align: center;
             margin-top: 50px;
@@ -190,6 +185,231 @@
         .autocomplete-item.selected {
             background-color: #e3f2fd;
         }
+
+        /* ---------------------------------------------------------------
+           Database at a glance
+           Palette: categorical slot 1 (blue) as the single series colour,
+           on a white chart surface -- validated with the data-viz palette
+           checker (lightness band, chroma floor, 3:1 contrast).  Light only,
+           to match the rest of the page.
+           --------------------------------------------------------------- */
+        .db-stats {
+            --surface-1: #ffffff;
+            --text-primary: #0b0b0b;
+            --text-secondary: #52514e;
+            --text-muted: #898781;
+            --gridline: #e1e0d9;
+            --baseline: #c3c2b7;
+            /* Hue marks what a figure is about, never how large a value is:
+               every bar inside one figure keeps the same colour, so nothing is
+               double-encoded and no comparison depends on telling hues apart.
+               Four slots from the validated categorical palette -- the set
+               clears every all-pairs gate on white.  Aqua sits below 3:1, which
+               the per-figure table view relieves. */
+            --subject-samples: #2a78d6;   /* blue    */
+            --subject-tfs: #eb6834;       /* orange  */
+            --subject-evidence: #1baf7a;  /* aqua    */
+            --subject-position: #4a3aa7;  /* violet  */
+            /* The one figure with two series: here colour really does carry
+               identity, so it takes the palette's leading pair -- the widest
+               separation in the set, and the only pair where both slots clear
+               3:1 unaided.  A legend names them, so identity is never
+               colour-alone. */
+            --score-confidence: #2a78d6;  /* blue    */
+            --score-importance: #eb6834;  /* orange  */
+            --series-1: #2a78d6;
+            --hairline: rgba(11, 11, 11, 0.10);
+            width: 90%;
+            margin: 0 auto 40px;
+            text-align: left;
+        }
+        .db-stats h2 {
+            font-size: 22px;
+            margin: 0 0 4px;
+            color: var(--text-primary);
+        }
+        .db-stats-controls {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .species-toggle {
+            display: inline-flex;
+            border: 1px solid var(--hairline);
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--surface-1);
+        }
+        .species-toggle button {
+            border: none;
+            background: transparent;
+            padding: 7px 18px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .species-toggle button + button {
+            border-left: 1px solid var(--hairline);
+        }
+        .species-toggle button[aria-pressed="true"] {
+            background: var(--series-1);
+            color: #fff;
+        }
+        .db-stats-generated {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* KPI row */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .kpi {
+            background: var(--surface-1);
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+        .kpi-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0 0 6px;
+        }
+        .kpi-value {
+            font-size: 30px;
+            line-height: 1.1;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .kpi-note {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 5px 0 0;
+        }
+
+        /* Chart cards */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+            align-items: start;
+            gap: 16px;
+        }
+        .chart-card {
+            background: var(--surface-1);
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 0;
+            min-width: 0;
+        }
+        .chart-card h3 {
+            font-size: 15px;
+            margin: 0 0 12px;
+            color: var(--text-primary);
+        }
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin: 0 0 8px;
+            padding: 0;
+            list-style: none;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .chart-legend li {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .chart-legend-key {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex: none;
+        }
+        .chart-plot svg {
+            display: block;
+            overflow: visible;
+        }
+        .chart-actions {
+            margin-top: 10px;
+        }
+        .chart-table-toggle {
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+            font-size: 12px;
+            color: var(--series-1);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .chart-table {
+            margin-top: 10px;
+            max-height: 240px;
+            overflow: auto;
+        }
+        .chart-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .chart-table th,
+        .chart-table td {
+            text-align: left;
+            padding: 4px 8px;
+            border-bottom: 1px solid var(--gridline);
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+        .chart-table th {
+            color: var(--text-primary);
+        }
+        .chart-table td.num,
+        .chart-table th.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* SVG marks and chrome */
+        .chart-bar { fill: var(--series, var(--series-1)); }
+        .chart-hit { fill: transparent; cursor: default; }
+        .chart-row.on .chart-bar { fill-opacity: 0.78; }
+        .chart-row.link { cursor: pointer; }
+        .chart-cat { fill: var(--text-secondary); font-size: 12px; }
+        .chart-val { fill: var(--text-secondary); font-size: 12px; }
+        .chart-axis {
+            fill: var(--text-muted);
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+        }
+        .chart-axis-title { fill: var(--text-muted); font-size: 11px; }
+        .chart-grid-line { stroke: var(--gridline); stroke-width: 1; }
+        .chart-baseline { stroke: var(--baseline); stroke-width: 1; }
+
+        /* Shared hover tooltip */
+        .chart-tip {
+            position: fixed;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.08s linear;
+            background: #0b0b0b;
+            color: #fff;
+            font-size: 12px;
+            line-height: 1.4;
+            padding: 6px 9px;
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+        .chart-tip.on { opacity: 1; }
     </style>
 </head>
 <body>
@@ -308,14 +528,30 @@
                     </form>
                 </div>
             </div>
-            
-            <div class="examples">
-                {% for example in examples %}
-                <p>{{ example }}</p>
-                {% endfor %}
-            </div>
-        </div>
+                    </div>
     </div>
+
+    {% if database_stats %}
+    <div class="container">
+        <section class="db-stats" id="db-stats">
+            <h2>Database at a glance</h2>
+
+            <!-- One control row, scoping every figure below it -->
+            <div class="db-stats-controls">
+                <div class="species-toggle" role="group" aria-label="Species">
+                    <button type="button" data-species="human" aria-pressed="true">Human</button>
+                    <button type="button" data-species="mouse" aria-pressed="false">Mouse</button>
+                </div>
+                <span class="db-stats-generated" id="db-stats-generated"></span>
+            </div>
+
+            <div class="kpi-row" id="db-stats-kpis"></div>
+            <div class="chart-grid" id="db-stats-charts"></div>
+        </section>
+    </div>
+    {{ database_stats|json_script:"database-stats" }}
+    {% endif %}
+
     
     <footer>
         <p>© 2026 TFBSpedia - A Database for Transcription Factor Binding Sites</p>
@@ -572,6 +808,725 @@
             hideDropdown();
             searchInput.focus();
         }
+    </script>
+
+    <!-- "Database at a glance" figures. Plain SVG: no charting library, and the
+         numbers are pre-aggregated, so the section costs one 4 KB JSON blob. -->
+    <script>
+    (function () {
+        var dataNode = document.getElementById('database-stats');
+        if (!dataNode) return;
+
+        var ALL = JSON.parse(dataNode.textContent);
+        var SPECIES = Object.keys(ALL);
+        if (!SPECIES.length) return;
+        var current = ALL.human ? 'human' : SPECIES[0];
+
+        var SVG_NS = 'http://www.w3.org/2000/svg';
+        var FONT_CAT = '12px Arial, sans-serif';
+        var FONT_VAL = '12px Arial, sans-serif';
+        var FONT_AXIS = '11px Arial, sans-serif';
+        var BAR = 24;         /* mark thickness cap */
+        var GAP = 2;          /* surface gap between touching bars */
+        var RADIUS = 4;       /* rounded data-end */
+
+        /* ---------- small helpers ---------- */
+
+        function el(name, attrs, text) {
+            var node = document.createElementNS(SVG_NS, name);
+            for (var key in attrs) node.setAttribute(key, attrs[key]);
+            if (text != null) node.textContent = text;
+            return node;
+        }
+
+        function full(n) { return n.toLocaleString('en-US'); }
+
+        function compact(n) {
+            var abs = Math.abs(n);
+            if (abs >= 1e9) return trim(n / 1e9) + 'B';
+            if (abs >= 1e6) return trim(n / 1e6) + 'M';
+            if (abs >= 1e4) return trim(n / 1e3) + 'K';
+            return full(n);
+        }
+        function trim(v) {
+            return (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1)).replace(/\.0$/, '');
+        }
+
+        var ruler = document.createElement('canvas').getContext('2d');
+        function textWidth(text, font) {
+            ruler.font = font;
+            return ruler.measureText(text).width;
+        }
+        function truncate(text, font, max) {
+            if (textWidth(text, font) <= max) return text;
+            var cut = text;
+            while (cut.length > 1 && textWidth(cut + '…', font) > max) cut = cut.slice(0, -1);
+            return cut + '…';
+        }
+
+        /* Axis maxima land on a round number so the ticks read cleanly. */
+        function niceMax(value) {
+            if (!(value > 0)) return 1;
+            var mag = Math.pow(10, Math.floor(Math.log10(value)));
+            var steps = [1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+            for (var i = 0; i < steps.length; i++) {
+                if (value <= steps[i] * mag) return steps[i] * mag;
+            }
+            return 10 * mag;
+        }
+
+        /* Bar with a rounded far end, square where it meets the baseline. */
+        function barRight(x, y, w, h) {
+            var r = Math.min(RADIUS, w, h / 2);
+            if (w < 0.75) return 'M' + x + ',' + y + 'h0.75v' + h + 'h-0.75Z';
+            return 'M' + x + ',' + y +
+                   'H' + (x + w - r) + 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + r +
+                   'V' + (y + h - r) + 'a' + r + ',' + r + ' 0 0 1 ' + (-r) + ',' + r +
+                   'H' + x + 'Z';
+        }
+        function barUp(x, base, w, h) {
+            var r = Math.min(RADIUS, h, w / 2);
+            if (h < 0.75) return 'M' + x + ',' + base + 'v-0.75h' + w + 'v0.75Z';
+            return 'M' + x + ',' + base +
+                   'V' + (base - h + r) + 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + (-r) +
+                   'H' + (x + w - r) + 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + r +
+                   'V' + base + 'Z';
+        }
+
+        /* ---------- shared tooltip ---------- */
+
+        var tip = document.createElement('div');
+        tip.className = 'chart-tip';
+        tip.setAttribute('role', 'presentation');
+        document.body.appendChild(tip);
+
+        function showTip(text, event) {
+            tip.textContent = text;
+            tip.classList.add('on');
+            moveTip(event);
+        }
+        function moveTip(event) {
+            var pad = 14;
+            var x = event.clientX + pad;
+            var y = event.clientY + pad;
+            var box = tip.getBoundingClientRect();
+            if (x + box.width > window.innerWidth - 8) x = event.clientX - box.width - pad;
+            if (y + box.height > window.innerHeight - 8) y = event.clientY - box.height - pad;
+            tip.style.left = x + 'px';
+            tip.style.top = y + 'px';
+        }
+        function hideTip() { tip.classList.remove('on'); }
+
+        /* Wire one bar group: generous hit area, hover highlight, tooltip. */
+        function bindRow(group, label) {
+            group.addEventListener('mouseenter', function (e) {
+                group.classList.add('on');
+                showTip(label, e);
+            });
+            group.addEventListener('mousemove', moveTip);
+            group.addEventListener('mouseleave', function () {
+                group.classList.remove('on');
+                hideTip();
+            });
+        }
+
+        /* ---------- horizontal bars: ranked / named categories ---------- */
+
+        function renderHBar(host, series, spec) {
+            var width = Math.max(280, host.clientWidth || 380);
+            var band = BAR + GAP;
+
+            var valueW = 0;
+            series.forEach(function (d) {
+                valueW = Math.max(valueW, textWidth(compact(d.value), FONT_VAL));
+            });
+            var valueBand = Math.ceil(valueW) + 12;
+            /* Category column takes a third of the card, but never so much that
+               the bars get less than half the remaining width. */
+            var labelW = Math.min(180, Math.round(width * 0.34), Math.max(60, width - valueBand - 120));
+
+            var plotX = labelW + 10;
+            var plotW = Math.max(40, width - plotX - valueBand);
+            var height = series.length * band;
+            var max = Math.max.apply(null, series.map(function (d) { return d.value; })) || 1;
+
+            var svg = el('svg', {
+                width: width, height: height,
+                viewBox: '0 0 ' + width + ' ' + height,
+                role: 'img', 'aria-label': spec.title
+            });
+            if (spec.color) svg.style.setProperty('--series', spec.color);
+
+            series.forEach(function (d, i) {
+                var top = i * band;
+                var mid = top + band / 2;
+                var w = Math.max(0, d.value / max * plotW);
+                var readout = d.label + ': ' + full(d.value) + ' ' + (spec.unit || 'regions') +
+                              (spec.href ? ' \u00b7 click to search' : '');
+
+                var group = el('g', { class: 'chart-row' + (spec.href ? ' link' : '') });
+                group.appendChild(el('title', {}, readout));
+                /* Hit area spans the whole row, label included -- 26px tall. */
+                group.appendChild(el('rect', {
+                    class: 'chart-hit', x: 0, y: top, width: width, height: band
+                }));
+                group.appendChild(el('text', {
+                    class: 'chart-cat', x: labelW, y: mid,
+                    'text-anchor': 'end', 'dominant-baseline': 'central'
+                }, truncate(d.label, FONT_CAT, labelW)));
+                group.appendChild(el('path', {
+                    class: 'chart-bar', d: barRight(plotX, top + GAP / 2, w, BAR)
+                }));
+                group.appendChild(el('text', {
+                    class: 'chart-val', x: plotX + w + 8, y: mid,
+                    'dominant-baseline': 'central'
+                }, compact(d.value)));
+
+                bindRow(group, readout);
+                if (spec.href) {
+                    var href = spec.href(d);
+                    group.addEventListener('click', function () { window.location.href = href; });
+                }
+                svg.appendChild(group);
+            });
+
+            host.appendChild(svg);
+        }
+
+        /* ---------- columns: ordered scales (chromosome, score, bins) ---------- */
+
+        function renderColumn(host, series, spec) {
+            var width = Math.max(280, host.clientWidth || 380);
+            var plotH = 172;
+            var padTop = 10;
+            var padRight = 8;
+
+            var rawMax = Math.max.apply(null, series.map(function (d) { return d.value; })) || 1;
+            var max = niceMax(rawMax);
+            var ticks = [0, 0.25, 0.5, 0.75, 1].map(function (f) { return max * f; });
+
+            var tickW = 0;
+            ticks.forEach(function (t) {
+                tickW = Math.max(tickW, textWidth(compact(t), FONT_AXIS));
+            });
+            var padLeft = Math.ceil(tickW) + 10;
+            var plotW = Math.max(60, width - padLeft - padRight);
+            var band = plotW / series.length;
+            var barW = Math.min(BAR, Math.max(3, band - GAP));
+
+            /* Rotate the category labels only when they cannot fit upright. */
+            var labels = series.map(function (d) {
+                return spec.tickLabel ? spec.tickLabel(d.label) : d.label;
+            });
+            var widest = 0;
+            labels.forEach(function (t) { widest = Math.max(widest, textWidth(t, FONT_AXIS)); });
+            var rotate = widest > band - 4;
+            var labelBand = rotate ? Math.min(64, Math.ceil(widest * 0.75)) + 12 : 18;
+            var titleBand = spec.axisTitle ? 16 : 0;
+            var base = padTop + plotH;
+            var height = base + labelBand + titleBand;
+
+            var svg = el('svg', {
+                width: width, height: height,
+                viewBox: '0 0 ' + width + ' ' + height,
+                role: 'img', 'aria-label': spec.title
+            });
+            if (spec.color) svg.style.setProperty('--series', spec.color);
+
+            /* Gridlines behind the marks; the zero line is the baseline itself. */
+            ticks.forEach(function (t) {
+                var y = base - t / max * plotH;
+                svg.appendChild(el('line', {
+                    class: t === 0 ? 'chart-baseline' : 'chart-grid-line',
+                    x1: padLeft, x2: padLeft + plotW, y1: y, y2: y
+                }));
+                svg.appendChild(el('text', {
+                    class: 'chart-axis', x: padLeft - 7, y: y,
+                    'text-anchor': 'end', 'dominant-baseline': 'central'
+                }, compact(t)));
+            });
+
+            series.forEach(function (d, i) {
+                var x = padLeft + i * band + (band - barW) / 2;
+                var h = Math.max(0, d.value / max * plotH);
+                var readout = (spec.readout ? spec.readout(d.label) : d.label) +
+                              ': ' + full(d.value) + ' ' + (spec.unit || 'regions');
+
+                var group = el('g', { class: 'chart-row' });
+                group.appendChild(el('title', {}, readout));
+                group.appendChild(el('rect', {
+                    class: 'chart-hit',
+                    x: padLeft + i * band, y: padTop,
+                    width: band, height: plotH
+                }));
+                group.appendChild(el('path', {
+                    class: 'chart-bar', d: barUp(x, base, barW, h)
+                }));
+
+                var cx = padLeft + i * band + band / 2;
+                var label = el('text', {
+                    class: 'chart-axis',
+                    'text-anchor': rotate ? 'end' : 'middle'
+                }, labels[i]);
+                if (rotate) {
+                    label.setAttribute('x', 0);
+                    label.setAttribute('y', 0);
+                    label.setAttribute('dominant-baseline', 'central');
+                    label.setAttribute('transform',
+                        'translate(' + (cx + 4) + ',' + (base + 12) + ') rotate(-45)');
+                } else {
+                    label.setAttribute('x', cx);
+                    label.setAttribute('y', base + 13);
+                    label.setAttribute('dominant-baseline', 'hanging');
+                }
+                group.appendChild(label);
+
+                bindRow(group, readout);
+                svg.appendChild(group);
+            });
+
+            if (spec.axisTitle) {
+                svg.appendChild(el('text', {
+                    class: 'chart-axis-title',
+                    x: padLeft + plotW / 2, y: height - 2,
+                    'text-anchor': 'middle'
+                }, spec.axisTitle));
+            }
+
+            host.appendChild(svg);
+        }
+
+        /* ---------- grouped columns: two series over one ordered scale ---------- */
+
+        function renderGroupedColumn(host, groups, spec) {
+            var width = Math.max(280, host.clientWidth || 380);
+            var plotH = 172;
+            var padTop = 10;
+            var padRight = 8;
+
+            /* Union of both scales, ascending: the two scores share a value axis
+               but not a range (importance dips below zero, confidence runs
+               higher), so a value only one series reaches still gets a slot. */
+            var seen = {};
+            var labels = [];
+            groups.forEach(function (g) {
+                g.points.forEach(function (d) {
+                    if (!(d.label in seen)) { seen[d.label] = true; labels.push(d.label); }
+                });
+            });
+            labels.sort(function (a, b) { return Number(a) - Number(b); });
+
+            var lookup = groups.map(function (g) {
+                var byLabel = {};
+                g.points.forEach(function (d) { byLabel[d.label] = d.value; });
+                return byLabel;
+            });
+
+            var rawMax = 0;
+            groups.forEach(function (g) {
+                g.points.forEach(function (d) { rawMax = Math.max(rawMax, d.value); });
+            });
+            var max = niceMax(rawMax || 1);
+            var ticks = [0, 0.25, 0.5, 0.75, 1].map(function (f) { return max * f; });
+
+            var tickW = 0;
+            ticks.forEach(function (t) {
+                tickW = Math.max(tickW, textWidth(compact(t), FONT_AXIS));
+            });
+            var padLeft = Math.ceil(tickW) + 10;
+            var plotW = Math.max(60, width - padLeft - padRight);
+            var band = plotW / labels.length;
+
+            /* Each group holds one bar per series with a surface gap between
+               them, and the leftover band width keeps the groups apart. */
+            var barW = Math.max(3, Math.min(BAR, (band - GAP) / groups.length - GAP));
+            var groupW = barW * groups.length + GAP * (groups.length - 1);
+
+            var widest = 0;
+            labels.forEach(function (t) { widest = Math.max(widest, textWidth(t, FONT_AXIS)); });
+            var rotate = widest > band - 4;
+            var labelBand = rotate ? Math.min(64, Math.ceil(widest * 0.75)) + 12 : 18;
+            var titleBand = spec.axisTitle ? 16 : 0;
+            var base = padTop + plotH;
+            var height = base + labelBand + titleBand;
+
+            var svg = el('svg', {
+                width: width, height: height,
+                viewBox: '0 0 ' + width + ' ' + height,
+                role: 'img', 'aria-label': spec.title
+            });
+
+            ticks.forEach(function (t) {
+                var y = base - t / max * plotH;
+                svg.appendChild(el('line', {
+                    class: t === 0 ? 'chart-baseline' : 'chart-grid-line',
+                    x1: padLeft, x2: padLeft + plotW, y1: y, y2: y
+                }));
+                svg.appendChild(el('text', {
+                    class: 'chart-axis', x: padLeft - 7, y: y,
+                    'text-anchor': 'end', 'dominant-baseline': 'central'
+                }, compact(t)));
+            });
+
+            labels.forEach(function (label, i) {
+                var groupX = padLeft + i * band + (band - groupW) / 2;
+                var cx = padLeft + i * band + band / 2;
+
+                groups.forEach(function (g, s) {
+                    var value = lookup[s][label];
+                    if (value == null) return;   /* series does not reach this value */
+                    var x = groupX + s * (barW + GAP);
+                    var h = Math.max(0, value / max * plotH);
+                    var readout = g.name + ' ' + label + ': ' + full(value) + ' regions';
+
+                    var row = el('g', { class: 'chart-row' });
+                    row.appendChild(el('title', {}, readout));
+                    /* Hit area is the bar's whole share of the band, not just
+                       the bar: the widest target that cannot overlap its
+                       neighbour's. */
+                    var slot = band / groups.length;
+                    row.appendChild(el('rect', {
+                        class: 'chart-hit',
+                        x: padLeft + i * band + s * slot, y: padTop,
+                        width: slot, height: plotH
+                    }));
+                    var bar = el('path', { class: 'chart-bar', d: barUp(x, base, barW, h) });
+                    bar.style.setProperty('--series', g.color);
+                    row.appendChild(bar);
+
+                    bindRow(row, readout);
+                    svg.appendChild(row);
+                });
+
+                var tick = el('text', {
+                    class: 'chart-axis',
+                    'text-anchor': rotate ? 'end' : 'middle'
+                }, label);
+                if (rotate) {
+                    tick.setAttribute('transform',
+                        'translate(' + (cx + 4) + ',' + (base + 12) + ') rotate(-45)');
+                    tick.setAttribute('dominant-baseline', 'central');
+                } else {
+                    tick.setAttribute('x', cx);
+                    tick.setAttribute('y', base + 13);
+                    tick.setAttribute('dominant-baseline', 'hanging');
+                }
+                svg.appendChild(tick);
+            });
+
+            if (spec.axisTitle) {
+                svg.appendChild(el('text', {
+                    class: 'chart-axis-title',
+                    x: padLeft + plotW / 2, y: height - 2,
+                    'text-anchor': 'middle'
+                }, spec.axisTitle));
+            }
+
+            /* Two series means identity can never rest on colour alone. */
+            host.appendChild(legendFor(groups));
+            host.appendChild(svg);
+        }
+
+        function legendFor(groups) {
+            var legend = document.createElement('ul');
+            legend.className = 'chart-legend';
+            groups.forEach(function (g) {
+                var item = document.createElement('li');
+                var swatch = document.createElement('span');
+                swatch.className = 'chart-legend-key';
+                swatch.style.background = g.color;
+                item.appendChild(swatch);
+                item.appendChild(document.createTextNode(g.name));
+                legend.appendChild(item);
+            });
+            return legend;
+        }
+
+        /* ---------- the figures ---------- */
+
+        function searchUrl(query) {
+            return '/search/?query=' + encodeURIComponent(query) +
+                   '&species=' + encodeURIComponent(current);
+        }
+
+        var CHARTS = [
+            {
+                key: 'top_cell_tissues_by_regions',
+                form: renderHBar,
+                title: 'Top cell lines and tissues',
+                color: 'var(--subject-samples)'
+            },
+            {
+                key: 'top_tfs_by_regions',
+                form: renderHBar,
+                title: 'Top transcription factors',
+                color: 'var(--subject-tfs)',
+                href: function (d) { return searchUrl(d.label); }
+            },
+            {
+                key: 'by_assay',
+                form: renderHBar,
+                title: 'Regions by assay',
+                color: 'var(--subject-evidence)'
+            },
+            {
+                key: 'by_source',
+                form: renderHBar,
+                title: 'Regions by source',
+                color: 'var(--subject-evidence)'
+            },
+            {
+                key: 'by_chromosome',
+                form: renderColumn,
+                title: 'Regions per chromosome',
+                color: 'var(--subject-position)',
+                axisTitle: 'Chromosome',
+                tickLabel: function (label) { return label.replace(/^chr/, ''); }
+            },
+            {
+                keys: [
+                    { key: 'by_confidence', name: 'Confidence', color: 'var(--score-confidence)' },
+                    { key: 'by_importance', name: 'Importance', color: 'var(--score-importance)' }
+                ],
+                form: renderGroupedColumn,
+                title: 'Regions by confidence and importance score',
+                axisTitle: 'Score',
+                categoryHeading: 'Score'
+            }
+        ];
+
+        function kpis(stats) {
+            var t = stats.totals;
+            var tiles = [
+                {
+                    label: 'Binding regions',
+                    value: compact(t.regions),
+                    exact: full(t.regions),
+                    note: 'across ' + stats.by_chromosome.length + ' chromosomes'
+                },
+                {
+                    label: 'Transcription factors',
+                    value: full(t.tfs),
+                    exact: full(t.tfs),
+                    note: t.unnamed_regions
+                        ? 'plus ' + compact(t.unnamed_regions) + ' regions with no TF assigned'
+                        : 'named in this assembly'
+                },
+                {
+                    label: 'Cell lines and tissues',
+                    value: full(t.cell_tissues),
+                    exact: full(t.cell_tissues),
+                    note: 'samples the regions were observed in'
+                },
+                {
+                    label: 'Source databases',
+                    value: full(t.sources),
+                    exact: full(t.sources),
+                    note: t.assays + (t.assays === 1 ? ' assay type' : ' assay types')
+                }
+            ];
+
+            var host = document.getElementById('db-stats-kpis');
+            host.innerHTML = '';
+            tiles.forEach(function (tile) {
+                var box = document.createElement('div');
+                box.className = 'kpi';
+                var label = document.createElement('p');
+                label.className = 'kpi-label';
+                label.textContent = tile.label;
+                var value = document.createElement('div');
+                value.className = 'kpi-value';
+                value.textContent = tile.value;
+                value.title = tile.exact;
+                var note = document.createElement('p');
+                note.className = 'kpi-note';
+                note.textContent = tile.note;
+                box.appendChild(label);
+                box.appendChild(value);
+                box.appendChild(note);
+                host.appendChild(box);
+            });
+        }
+
+        /* Every figure ships a table twin, so no value is reachable only by hover. */
+        function tableFor(series, spec) {
+            var wrap = document.createElement('div');
+            wrap.className = 'chart-table';
+            wrap.hidden = true;
+
+            var table = document.createElement('table');
+            var head = table.insertRow();
+            var th1 = document.createElement('th');
+            th1.textContent = spec.categoryHeading || 'Category';
+            var th2 = document.createElement('th');
+            th2.className = 'num';
+            th2.textContent = spec.valueHeading || 'Regions';
+            head.appendChild(th1);
+            head.appendChild(th2);
+
+            series.forEach(function (d) {
+                var row = table.insertRow();
+                row.insertCell().textContent = d.label;
+                var cell = row.insertCell();
+                cell.className = 'num';
+                cell.textContent = full(d.value);
+            });
+
+            wrap.appendChild(table);
+            return wrap;
+        }
+
+        /* Table twin for a grouped figure: one column per series. */
+        function groupedTableFor(groups, spec) {
+            var wrap = document.createElement('div');
+            wrap.className = 'chart-table';
+            wrap.hidden = true;
+
+            var labels = [];
+            var seen = {};
+            groups.forEach(function (g) {
+                g.points.forEach(function (d) {
+                    if (!(d.label in seen)) { seen[d.label] = true; labels.push(d.label); }
+                });
+            });
+            labels.sort(function (a, b) { return Number(a) - Number(b); });
+
+            var lookup = groups.map(function (g) {
+                var byLabel = {};
+                g.points.forEach(function (d) { byLabel[d.label] = d.value; });
+                return byLabel;
+            });
+
+            var table = document.createElement('table');
+            var head = table.insertRow();
+            var th = document.createElement('th');
+            th.textContent = spec.categoryHeading || 'Category';
+            head.appendChild(th);
+            groups.forEach(function (g) {
+                var cell = document.createElement('th');
+                cell.className = 'num';
+                cell.textContent = g.name;
+                head.appendChild(cell);
+            });
+
+            labels.forEach(function (label) {
+                var row = table.insertRow();
+                row.insertCell().textContent = label;
+                groups.forEach(function (g, s) {
+                    var cell = row.insertCell();
+                    cell.className = 'num';
+                    var value = lookup[s][label];
+                    cell.textContent = value == null ? '\u2013' : full(value);
+                });
+            });
+
+            wrap.appendChild(table);
+            return wrap;
+        }
+
+        function charts(stats) {
+            var host = document.getElementById('db-stats-charts');
+            host.innerHTML = '';
+            var pending = [];
+
+            CHARTS.forEach(function (spec) {
+                /* A spec carries either one series (spec.key) or several
+                   (spec.keys) to be drawn side by side. */
+                var groups = null;
+                var series = null;
+                if (spec.keys) {
+                    groups = spec.keys
+                        .filter(function (s) { return (stats[s.key] || []).length; })
+                        .map(function (s) {
+                            return { name: s.name, color: s.color, points: stats[s.key] };
+                        });
+                    if (!groups.length) return;
+                } else {
+                    series = stats[spec.key];
+                    if (!series || !series.length) return;
+                }
+
+                var card = document.createElement('figure');
+                card.className = 'chart-card';
+
+                var caption = document.createElement('figcaption');
+                var title = document.createElement('h3');
+                title.textContent = spec.title;
+                caption.appendChild(title);
+                card.appendChild(caption);
+
+                var plot = document.createElement('div');
+                plot.className = 'chart-plot';
+                card.appendChild(plot);
+
+                var table = groups ? groupedTableFor(groups, spec) : tableFor(series, spec);
+                var actions = document.createElement('div');
+                actions.className = 'chart-actions';
+                var toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'chart-table-toggle';
+                toggle.textContent = 'Show table';
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.addEventListener('click', function () {
+                    var open = table.hidden;
+                    table.hidden = !open;
+                    toggle.textContent = open ? 'Hide table' : 'Show table';
+                    toggle.setAttribute('aria-expanded', String(open));
+                });
+                actions.appendChild(toggle);
+                card.appendChild(actions);
+                card.appendChild(table);
+
+                host.appendChild(card);
+                pending.push(function () { spec.form(plot, groups || series, spec); });
+            });
+
+            /* Draw only once every card exists: the grid's column count -- and so
+               each card's width -- is not final until then. */
+            pending.forEach(function (drawPlot) { drawPlot(); });
+        }
+
+        function draw() {
+            var stats = ALL[current];
+            if (!stats) return;
+            document.getElementById('db-stats-generated').textContent =
+                'Counted ' + stats.generated + '.';
+            kpis(stats);
+            charts(stats);
+        }
+
+        var buttons = document.querySelectorAll('.species-toggle button');
+        Array.prototype.forEach.call(buttons, function (button) {
+            var species = button.getAttribute('data-species');
+            if (!ALL[species]) {
+                button.disabled = true;
+                button.title = 'No summary available for this species';
+                return;
+            }
+            button.addEventListener('click', function () {
+                if (current === species) return;
+                current = species;
+                Array.prototype.forEach.call(buttons, function (other) {
+                    other.setAttribute('aria-pressed',
+                        String(other.getAttribute('data-species') === species));
+                });
+                hideTip();
+                draw();
+            });
+        });
+
+        draw();
+
+        /* SVGs are laid out in pixels, so redraw when the column width changes. */
+        var resizeTimer;
+        window.addEventListener('resize', function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function () {
+                hideTip();
+                charts(ALL[current]);
+            }, 150);
+        });
+    })();
     </script>
 </body>
 </html>

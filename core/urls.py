@@ -13,8 +13,12 @@ except:
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # home.urls before admin_soft.urls: both register "", and admin_soft's is a
+    # placeholder dashboard view that renders pages/index.html with none of the
+    # home page's context.  Everything admin_soft owns still falls through --
+    # "" is the only pattern the two share.
+    path("", include("home.urls")),
     path("", include("admin_soft.urls")),
-    path("", include("home.urls")),  
 ]
 
 

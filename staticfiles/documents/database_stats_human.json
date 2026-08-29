@@ -1,0 +1,338 @@
+{
+ "by_assay": [
+  {
+   "label": "DNase-seq",
+   "value": 40107570
+  },
+  {
+   "label": "ChIP-seq",
+   "value": 34573045
+  },
+  {
+   "label": "ATAC-seq",
+   "value": 19811041
+  }
+ ],
+ "by_chromosome": [
+  {
+   "label": "chr1",
+   "value": 5927883
+  },
+  {
+   "label": "chr2",
+   "value": 5618771
+  },
+  {
+   "label": "chr3",
+   "value": 4346514
+  },
+  {
+   "label": "chr4",
+   "value": 3708376
+  },
+  {
+   "label": "chr5",
+   "value": 3990497
+  },
+  {
+   "label": "chr6",
+   "value": 3893596
+  },
+  {
+   "label": "chr7",
+   "value": 3791287
+  },
+  {
+   "label": "chr8",
+   "value": 3369025
+  },
+  {
+   "label": "chr9",
+   "value": 3053714
+  },
+  {
+   "label": "chr10",
+   "value": 3469266
+  },
+  {
+   "label": "chr11",
+   "value": 3488543
+  },
+  {
+   "label": "chr12",
+   "value": 3252118
+  },
+  {
+   "label": "chr13",
+   "value": 2165775
+  },
+  {
+   "label": "chr14",
+   "value": 2273733
+  },
+  {
+   "label": "chr15",
+   "value": 2288441
+  },
+  {
+   "label": "chr16",
+   "value": 2406669
+  },
+  {
+   "label": "chr17",
+   "value": 2665160
+  },
+  {
+   "label": "chr18",
+   "value": 1768842
+  },
+  {
+   "label": "chr19",
+   "value": 1941489
+  },
+  {
+   "label": "chr20",
+   "value": 1613727
+  },
+  {
+   "label": "chr21",
+   "value": 757918
+  },
+  {
+   "label": "chr22",
+   "value": 1094649
+  },
+  {
+   "label": "chrX",
+   "value": 2233567
+  },
+  {
+   "label": "chrY",
+   "value": 109186
+  }
+ ],
+ "by_confidence": [
+  {
+   "label": "2",
+   "value": 45663127
+  },
+  {
+   "label": "3",
+   "value": 12006230
+  },
+  {
+   "label": "4",
+   "value": 4756945
+  },
+  {
+   "label": "5",
+   "value": 3324757
+  },
+  {
+   "label": "6",
+   "value": 2252313
+  },
+  {
+   "label": "7",
+   "value": 1113976
+  },
+  {
+   "label": "8",
+   "value": 111398
+  }
+ ],
+ "by_importance": [
+  {
+   "label": "-1",
+   "value": 250954
+  },
+  {
+   "label": "0",
+   "value": 20288590
+  },
+  {
+   "label": "1",
+   "value": 24059663
+  },
+  {
+   "label": "2",
+   "value": 14614559
+  },
+  {
+   "label": "3",
+   "value": 7446112
+  },
+  {
+   "label": "4",
+   "value": 2304217
+  },
+  {
+   "label": "5",
+   "value": 253845
+  },
+  {
+   "label": "6",
+   "value": 10612
+  },
+  {
+   "label": "7",
+   "value": 194
+  }
+ ],
+ "by_source": [
+  {
+   "label": "RegulomeDB",
+   "value": 36449655
+  },
+  {
+   "label": "Factorbook",
+   "value": 18824339
+  },
+  {
+   "label": "UM",
+   "value": 18549352
+  },
+  {
+   "label": "unibind",
+   "value": 12140118
+  },
+  {
+   "label": "ENCODE_footprint",
+   "value": 4744283
+  }
+ ],
+ "generated": "2026-08-23",
+ "species": "human",
+ "top_cell_tissues_by_regions": [
+  {
+   "label": "K562",
+   "value": 2901369
+  },
+  {
+   "label": "HEK293",
+   "value": 2459322
+  },
+  {
+   "label": "HEPG2",
+   "value": 2258732
+  },
+  {
+   "label": "MCF-7",
+   "value": 2129558
+  },
+  {
+   "label": "EMBRYONIC",
+   "value": 2113199
+  },
+  {
+   "label": "GM12878",
+   "value": 2038142
+  },
+  {
+   "label": "OSTEOBLAST",
+   "value": 1838875
+  },
+  {
+   "label": "PANCREAS",
+   "value": 1596721
+  },
+  {
+   "label": "HEART RIGHT VENTRICLE",
+   "value": 1490380
+  },
+  {
+   "label": "SK-N-SH",
+   "value": 1476418
+  },
+  {
+   "label": "PC-3",
+   "value": 1434706
+  },
+  {
+   "label": "SIGMOID COLON",
+   "value": 1420914
+  },
+  {
+   "label": "LEFT LUNG",
+   "value": 1310541
+  },
+  {
+   "label": "A549",
+   "value": 1234580
+  },
+  {
+   "label": "BONE",
+   "value": 1231216
+  }
+ ],
+ "top_tfs_by_regions": [
+  {
+   "label": "SPI1",
+   "value": 1896780
+  },
+  {
+   "label": "ZNF460",
+   "value": 1626161
+  },
+  {
+   "label": "CTCF",
+   "value": 1622271
+  },
+  {
+   "label": "ZNF135",
+   "value": 1489514
+  },
+  {
+   "label": "ZNF384",
+   "value": 1411312
+  },
+  {
+   "label": "ZFX",
+   "value": 1316140
+  },
+  {
+   "label": "IKZF1",
+   "value": 1188899
+  },
+  {
+   "label": "RXRA",
+   "value": 1157969
+  },
+  {
+   "label": "SOX2",
+   "value": 1144620
+  },
+  {
+   "label": "IRF1",
+   "value": 1119862
+  },
+  {
+   "label": "ESR1",
+   "value": 1109263
+  },
+  {
+   "label": "FOXA1",
+   "value": 1094059
+  },
+  {
+   "label": "SP1",
+   "value": 1071016
+  },
+  {
+   "label": "POU5F1",
+   "value": 1042591
+  },
+  {
+   "label": "STAT2",
+   "value": 1038303
+  }
+ ],
+ "totals": {
+  "assays": 3,
+  "cell_tissues": 1020,
+  "regions": 69228746,
+  "sources": 5,
+  "tfs": 1922,
+  "unnamed_regions": 8312853
+ }
+}

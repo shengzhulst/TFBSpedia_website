@@ -1,0 +1,278 @@
+{
+ "by_assay": [
+  {
+   "label": "ChIP-seq",
+   "value": 13976214
+  },
+  {
+   "label": "ATAC-seq",
+   "value": 453774
+  }
+ ],
+ "by_chromosome": [
+  {
+   "label": "chr1",
+   "value": 1037295
+  },
+  {
+   "label": "chr2",
+   "value": 1099398
+  },
+  {
+   "label": "chr3",
+   "value": 800622
+  },
+  {
+   "label": "chr4",
+   "value": 865920
+  },
+  {
+   "label": "chr5",
+   "value": 872666
+  },
+  {
+   "label": "chr6",
+   "value": 808632
+  },
+  {
+   "label": "chr7",
+   "value": 772173
+  },
+  {
+   "label": "chr8",
+   "value": 733282
+  },
+  {
+   "label": "chr9",
+   "value": 761726
+  },
+  {
+   "label": "chr10",
+   "value": 776799
+  },
+  {
+   "label": "chr11",
+   "value": 884651
+  },
+  {
+   "label": "chr12",
+   "value": 609055
+  },
+  {
+   "label": "chr13",
+   "value": 674861
+  },
+  {
+   "label": "chr14",
+   "value": 565834
+  },
+  {
+   "label": "chr15",
+   "value": 614453
+  },
+  {
+   "label": "chr16",
+   "value": 514573
+  },
+  {
+   "label": "chr17",
+   "value": 548290
+  },
+  {
+   "label": "chr18",
+   "value": 476147
+  },
+  {
+   "label": "chr19",
+   "value": 402617
+  },
+  {
+   "label": "chrX",
+   "value": 291724
+  },
+  {
+   "label": "chrY",
+   "value": 3377
+  }
+ ],
+ "by_confidence": [
+  {
+   "label": "2",
+   "value": 13439088
+  },
+  {
+   "label": "3",
+   "value": 373781
+  },
+  {
+   "label": "4",
+   "value": 301226
+  }
+ ],
+ "by_importance": [
+  {
+   "label": "-1",
+   "value": 1413
+  },
+  {
+   "label": "0",
+   "value": 4448362
+  },
+  {
+   "label": "1",
+   "value": 6465011
+  },
+  {
+   "label": "2",
+   "value": 3022455
+  },
+  {
+   "label": "3",
+   "value": 176854
+  }
+ ],
+ "by_source": [
+  {
+   "label": "unibind",
+   "value": 12419961
+  },
+  {
+   "label": "UM",
+   "value": 2354474
+  }
+ ],
+ "generated": "2026-08-23",
+ "species": "mouse",
+ "top_cell_tissues_by_regions": [
+  {
+   "label": "EMBRYONIC",
+   "value": 2139236
+  },
+  {
+   "label": "BONE",
+   "value": 1265766
+  },
+  {
+   "label": "BMDM",
+   "value": 1010825
+  },
+  {
+   "label": "ES",
+   "value": 715258
+  },
+  {
+   "label": "MAMMARY",
+   "value": 612127
+  },
+  {
+   "label": "E14TG2A",
+   "value": 514772
+  },
+  {
+   "label": "BROWN",
+   "value": 512659
+  },
+  {
+   "label": "PRIMARY",
+   "value": 487843
+  },
+  {
+   "label": "C2C12",
+   "value": 464840
+  },
+  {
+   "label": "EPIBLAST",
+   "value": 432474
+  },
+  {
+   "label": "CORTICAL",
+   "value": 398488
+  },
+  {
+   "label": "INDUCED",
+   "value": 395476
+  },
+  {
+   "label": "CD4",
+   "value": 369625
+  },
+  {
+   "label": "3T3-L1",
+   "value": 342765
+  },
+  {
+   "label": "MEL",
+   "value": 334531
+  }
+ ],
+ "top_tfs_by_regions": [
+  {
+   "label": "POU5F1",
+   "value": 863175
+  },
+  {
+   "label": "SOX2",
+   "value": 789181
+  },
+  {
+   "label": "SPI1",
+   "value": 736716
+  },
+  {
+   "label": "RXRA",
+   "value": 733062
+  },
+  {
+   "label": "NR3C1",
+   "value": 461085
+  },
+  {
+   "label": "CEBPA",
+   "value": 427265
+  },
+  {
+   "label": "CEBPB",
+   "value": 387861
+  },
+  {
+   "label": "PPARG",
+   "value": 370155
+  },
+  {
+   "label": "JUN",
+   "value": 341971
+  },
+  {
+   "label": "MEIS1",
+   "value": 323290
+  },
+  {
+   "label": "HOXA13",
+   "value": 321146
+  },
+  {
+   "label": "KLF4",
+   "value": 321100
+  },
+  {
+   "label": "RUNX1",
+   "value": 315998
+  },
+  {
+   "label": "MYC",
+   "value": 309922
+  },
+  {
+   "label": "TCF12",
+   "value": 280848
+  }
+ ],
+ "totals": {
+  "assays": 2,
+  "cell_tissues": 390,
+  "regions": 14114095,
+  "sources": 2,
+  "tfs": 638,
+  "unnamed_regions": 0
+ }
+}
