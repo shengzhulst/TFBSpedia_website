@@ -1,0 +1,160 @@
+{% comment %}
+Site-wide navigation.  Included at the top of every page's body; the pages are
+standalone documents with no shared base template, so the styles travel with the
+markup rather than living in a separate stylesheet.
+{% endcomment %}
+<style>
+    .tfbs-topbar {
+        --bar-ink: #1f1f1f;
+        --bar-muted: #52514e;
+        --bar-accent: #2a78d6;
+        --bar-line: rgba(11, 11, 11, 0.12);
+        position: relative;
+        z-index: 1100;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+        padding: 0 24px;
+        background: #ffffff;
+        border-bottom: 1px solid var(--bar-line);
+        font-family: Arial, sans-serif;
+    }
+    .tfbs-brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 12px 0;
+        font-size: 19px;
+        font-weight: bold;
+        color: var(--bar-accent);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .tfbs-brand:hover { color: var(--bar-accent); text-decoration: none; }
+
+    .tfbs-tabs {
+        display: flex;
+        align-items: stretch;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .tfbs-tabs > li { position: relative; display: flex; }
+    .tfbs-tab {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 14px 14px;
+        border: none;
+        background: none;
+        font-family: inherit;
+        font-size: 15px;
+        color: var(--bar-ink);
+        text-decoration: none;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+    }
+    .tfbs-tab:hover { color: var(--bar-accent); text-decoration: none; }
+    .tfbs-tab[aria-current="page"] {
+        color: var(--bar-accent);
+        border-bottom-color: var(--bar-accent);
+    }
+    .tfbs-caret { font-size: 10px; line-height: 1; }
+
+    /* Dropdown: opens on hover, and on click/Enter for keyboard and touch. */
+    .tfbs-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 210px;
+        margin: 0;
+        padding: 6px 0;
+        list-style: none;
+        background: #ffffff;
+        border: 1px solid var(--bar-line);
+        border-radius: 6px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        display: none;
+    }
+    .tfbs-has-menu:hover .tfbs-menu,
+    .tfbs-has-menu:focus-within .tfbs-menu,
+    .tfbs-menu.is-open { display: block; }
+    .tfbs-menu-head {
+        padding: 8px 14px 3px;
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #898781;
+    }
+    .tfbs-menu a {
+        display: block;
+        padding: 7px 14px;
+        font-size: 14px;
+        color: var(--bar-ink);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .tfbs-menu a:hover { background: #f2f6fc; color: var(--bar-accent); text-decoration: none; }
+
+    @media (max-width: 560px) {
+        .tfbs-topbar { padding: 0 14px; gap: 10px; }
+        .tfbs-tab { padding: 12px 10px; font-size: 14px; }
+    }
+</style>
+
+<nav class="tfbs-topbar" aria-label="Main">
+    <a class="tfbs-brand" href="{% url 'index' %}">TFBSpedia</a>
+    <ul class="tfbs-tabs">
+        <li>
+            <a class="tfbs-tab" href="{% url 'index' %}"
+               {% if request.resolver_match.url_name == 'index' %}aria-current="page"{% endif %}>Search</a>
+        </li>
+        <li class="tfbs-has-menu">
+            <button type="button" class="tfbs-tab" aria-haspopup="true" aria-expanded="false">
+                Downloads <span class="tfbs-caret" aria-hidden="true">&#9662;</span>
+            </button>
+            <ul class="tfbs-menu">
+                <li class="tfbs-menu-head">Human</li>
+                <li><a href="{% url 'download_tf_list' %}?species=human">Transcription factor list (CSV)</a></li>
+                <li class="tfbs-menu-head">Mouse</li>
+                <li><a href="{% url 'download_tf_list' %}?species=mouse">Transcription factor list (CSV)</a></li>
+            </ul>
+        </li>
+        <li>
+            <a class="tfbs-tab" href="{% url 'about' %}"
+               {% if request.resolver_match.url_name == 'about' %}aria-current="page"{% endif %}>About</a>
+        </li>
+    </ul>
+</nav>
+
+<script>
+(function () {
+    /* Hover alone would leave the menu unreachable by keyboard and on touch. */
+    document.querySelectorAll('.tfbs-has-menu').forEach(function (item) {
+        var button = item.querySelector('.tfbs-tab');
+        var menu = item.querySelector('.tfbs-menu');
+        if (!button || !menu) return;
+
+        function close() {
+            menu.classList.remove('is-open');
+            button.setAttribute('aria-expanded', 'false');
+        }
+
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            var open = !menu.classList.contains('is-open');
+            menu.classList.toggle('is-open', open);
+            button.setAttribute('aria-expanded', String(open));
+        });
+        item.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') { close(); button.focus(); }
+        });
+        document.addEventListener('click', function (event) {
+            if (!item.contains(event.target)) close();
+        });
+    });
+})();
+</script>

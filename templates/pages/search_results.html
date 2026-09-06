@@ -94,13 +94,9 @@
     </style>
 </head>
 <body>
+    {% include "includes/topbar.html" %}
+
     <div class="container">
-        <header class="d-flex align-items-center justify-content-between">
-            <div class="logo">
-                <a href="{% url 'index' %}">TFBSpedia</a>
-            </div>
-        </header>
-        
         <div class="search-form-container">
             <form class="row g-3" action="{% url 'search_results' %}" method="get">
                 <div class="col-md-6">

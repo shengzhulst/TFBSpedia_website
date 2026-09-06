@@ -1,0 +1,351 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TFBSpedia - About</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #6a1b9a;
+            border-bottom: 2px solid #6a1b9a;
+            padding-bottom: 10px;
+        }
+        .subsection-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin: 22px 0 10px;
+            color: #4a148c;
+        }
+        .section p, .section li { line-height: 1.65; }
+        .summary-table th, .summary-table td { padding: 8px 12px; }
+        .summary-table th { color: #4a148c; }
+        .summary-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .step {
+            border-left: 3px solid #6a1b9a;
+            padding: 2px 0 2px 16px;
+            margin-bottom: 18px;
+        }
+        .step h3 {
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 0 0 6px;
+            color: #333;
+        }
+        .callout {
+            background: #f3e5f5;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin: 16px 0;
+        }
+        .placeholder {
+            background: #fff8e1;
+            border: 1px dashed #c8a415;
+            border-radius: 6px;
+            padding: 14px 18px;
+            color: #6b5600;
+        }
+        code.q {
+            background: #f2f2f2;
+            border-radius: 3px;
+            padding: 1px 6px;
+            color: #6a1b9a;
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/topbar.html" %}
+
+    <div class="container">
+        <header class="mb-4">
+            <h1 class="section-title">About TFBSpedia</h1>
+        </header>
+
+        <!-- 1. Introduction and purpose -->
+        <div class="section">
+            <h2 class="subsection-title">What TFBSpedia is</h2>
+            <p>
+                TFBSpedia is a database of transcription factor binding sites (TFBS) in the
+                human and mouse genomes. Transcription factors control when and where genes
+                are switched on by binding to short stretches of DNA, and evidence for those
+                binding events is scattered across many experiments, assays and repositories.
+                TFBSpedia collects that evidence into one place, maps it onto a common set of
+                genomic regions, and records for every region which transcription factors bind
+                it, which biological samples it was observed in, and how much supporting
+                evidence stands behind it.
+            </p>
+            <p>
+                The purpose is to let a researcher start from a single question &mdash;
+                <em>where does this transcription factor bind?</em> or
+                <em>what binds this region of the genome?</em> &mdash; and get a complete,
+                citable answer without having to download and reconcile the underlying
+                resources themselves.
+            </p>
+
+            {% if summary %}
+            <div class="table-responsive">
+            <table class="table table-sm summary-table">
+                <thead>
+                    <tr>
+                        <th>Assembly</th>
+                        <th class="num">Binding regions</th>
+                        <th class="num">Transcription factors</th>
+                        <th class="num">Cell lines &amp; tissues</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in summary %}
+                    <tr>
+                        <td>{{ row.species }}</td>
+                        <td class="num">{{ row.regions }}</td>
+                        <td class="num">{{ row.tfs }}</td>
+                        <td class="num">{{ row.cell_tissues }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            <p class="text-muted" style="font-size: 0.9rem;">
+                The home page breaks these totals down by chromosome, assay, source and score.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- 2. Data sources and collection -->
+        <div class="section">
+            <h2 class="subsection-title">Where the data comes from</h2>
+            <p>
+                Binding sites are gathered from established public resources rather than
+                generated here, then harmonised onto one coordinate system per assembly so
+                that a region reported by two resources becomes a single entry carrying both
+                lines of evidence.
+            </p>
+            {% for row in summary %}
+            <p>
+                <strong>{{ row.species }}:</strong> {{ row.sources }} source
+                database{{ row.sources|pluralize }} ({{ row.sources_list }}) and
+                {{ row.assays }} assay type{{ row.assays|pluralize }} ({{ row.assays_list }}).
+            </p>
+            {% endfor %}
+
+            <h3 class="subsection-title">Measured versus predicted sites</h3>
+            <p>
+                The two kinds of evidence are kept distinct throughout the database, and you
+                can filter on them in the Advanced Search Options:
+            </p>
+            <ul>
+                <li>
+                    <strong>TFBS (ChIP-seq)</strong> &mdash; sites measured directly. A
+                    ChIP-seq experiment pulls down one specific transcription factor and
+                    sequences the DNA it was bound to, so the factor's identity is
+                    experimentally established.
+                </li>
+                <li>
+                    <strong>Predicted TFBS (ATAC-seq, DNase-seq)</strong> &mdash; sites
+                    inferred from open chromatin. These assays show where the DNA is
+                    accessible and where a protein leaves a footprint, but not which protein;
+                    the transcription factor is assigned by matching its sequence motif.
+                    Because motifs are scanned in every accessible sample, predicted sites are
+                    far more numerous and far less specific than measured ones.
+                </li>
+            </ul>
+            <p>
+                A single region can be supported by more than one assay and by more than one
+                source database. That is deliberate &mdash; agreement between independent
+                lines of evidence is what the confidence score measures &mdash; but it does
+                mean per-assay and per-source counts add up to more than the total number of
+                regions.
+            </p>
+
+            <h3 class="subsection-title">Region annotations</h3>
+            <p>
+                Every region is additionally intersected with a set of functional annotations,
+                which are shown on the detail page for that region and feed into its
+                importance score: promoters, enhancers, histone modification peaks, candidate
+                cis-regulatory elements, regulatory element&ndash;gene links, transposable
+                elements, variable CpG sites, GWAS associations, eQTLs, Codebook ChIP and
+                GHT-SELEX experiments, and blacklisted regions.
+            </p>
+        </div>
+
+        <!-- 3. Search and download guide -->
+        <div class="section">
+            <h2 class="subsection-title">Searching and downloading</h2>
+
+            <div class="step">
+                <h3>1. Search for a transcription factor or a region</h3>
+                <p>
+                    The search box on the home page accepts either kind of query:
+                </p>
+                <ul>
+                    <li>a transcription factor name &mdash; <code class="q">ESR1</code>,
+                        <code class="q">CTCF</code>, <code class="q">FOXP3</code>
+                        (autocomplete suggests names as you type)</li>
+                    <li>a genomic interval &mdash; <code class="q">chr1,10000,20000</code></li>
+                    <li>a whole chromosome &mdash; <code class="q">chr1</code></li>
+                </ul>
+                <p>
+                    Choose <strong>Human</strong> or <strong>Mouse</strong> beneath the box.
+                    Under <strong>Advanced Search Options</strong> you can restrict results to
+                    one cell line or tissue, and to measured or predicted sites only.
+                </p>
+            </div>
+
+            <div class="step">
+                <h3>2. Search many terms at once</h3>
+                <p>
+                    Switch the toggle to <strong>File Upload</strong> to run a batch search.
+                    Upload a <code class="q">.txt</code> or <code class="q">.csv</code> file
+                    with one term per line &mdash; TF names and genomic regions can be mixed
+                    in the same file. Up to 1,000 terms per file, 10&nbsp;MB maximum.
+                </p>
+            </div>
+
+            <div class="step">
+                <h3>3. Read the results table</h3>
+                <p>
+                    Results appear as a paginated table of regions, one row per region, with
+                    its chromosome, start and end coordinates. The <strong>Actions</strong>
+                    column opens a detail page for that region showing every transcription
+                    factor bound there, the samples it was seen in, its scores, and all
+                    overlapping annotations.
+                </p>
+            </div>
+
+            <div class="step">
+                <h3>4. Download the full result set</h3>
+                <p>
+                    Underneath the results table there is a
+                    <strong>&ldquo;Download All Results&rdquo;</strong> button. This is the
+                    part worth understanding clearly:
+                </p>
+                <div class="callout">
+                    <p style="margin-bottom: 8px;">
+                        <strong>The button downloads every matching region, not just the page
+                        you are looking at.</strong> The table shows 25 rows at a time; the
+                        CSV contains the complete result set for your query and filters, which
+                        for a well-studied factor can be more than a million rows and several
+                        tens of megabytes.
+                    </p>
+                    <p style="margin-bottom: 0;">
+                        The file starts downloading within about a second and then streams,
+                        so a large download will show as &ldquo;in progress&rdquo; in your
+                        browser for a while. That is expected &mdash; let it finish rather
+                        than cancelling and retrying.
+                    </p>
+                </div>
+                <p>
+                    The CSV has one row per region and these columns:
+                </p>
+                <ul>
+                    <li><strong>Chromosome, Start, End</strong> &mdash; the region's coordinates</li>
+                    <li><strong>ID</strong> &mdash; the region's stable TFBSpedia identifier,
+                        which you can use to look it up again</li>
+                    <li><strong>Confident_Score</strong> and <strong>Important_Score</strong>
+                        &mdash; the two scores described below</li>
+                </ul>
+                <p>
+                    Batch searches have the same button on their results page. Note that
+                    regions sharing identical coordinates are reported once, so the number of
+                    rows in the file can be slightly smaller than the number of entries
+                    reported above the table.
+                </p>
+            </div>
+
+            <div class="step">
+                <h3>5. Download a transcription factor list</h3>
+                <p>
+                    The <strong>Downloads</strong> menu in the top bar provides the full list
+                    of transcription factors held for each assembly, as a CSV giving each
+                    factor's name and how many regions it binds in total, by ChIP-seq, and by
+                    prediction.
+                </p>
+            </div>
+        </div>
+
+        <!-- 4. Scores -->
+        <div class="section">
+            <h2 class="subsection-title">The two scores</h2>
+            <p>
+                Every region carries two integer scores, both reported in the results table,
+                on the region detail page, and in every CSV download.
+            </p>
+            <ul>
+                <li>
+                    <strong>Confident score</strong> &mdash; how well supported the binding
+                    site is, counting the number of independent source databases plus the
+                    number of sequencing techniques that report it. Higher means more
+                    independent evidence.
+                    <em>Range 0&ndash;8 (human), 0&ndash;4 (mouse).</em>
+                </li>
+                <li>
+                    <strong>Important score</strong> &mdash; how much regulatory significance
+                    the region carries, combining overlap with promoters and enhancers,
+                    DNA methylation variability across tissues, Codebook annotations, GWAS and
+                    eQTL variants, and histone modification peaks. Higher means more
+                    regulatory evidence.
+                    <em>Range 0&ndash;7 (human), 0&ndash;4 (mouse).</em>
+                </li>
+            </ul>
+            <p>
+                <a href="{% url 'evaluation_metrics' %}">
+                    Read the full definition of both scores, including how each is calculated
+                    and how to interpret the ranges &rarr;
+                </a>
+            </p>
+        </div>
+
+        <!-- 5. Citation and contact -->
+        <div class="section">
+            <h2 class="subsection-title">Citing TFBSpedia</h2>
+            <div class="placeholder">
+                <p style="margin-bottom: 6px;"><strong>To be supplied.</strong></p>
+                <p style="margin-bottom: 0;">
+                    Add the publication to cite here &mdash; authors, title, journal, year and
+                    DOI &mdash; along with any funding acknowledgement.
+                </p>
+            </div>
+
+            <h2 class="subsection-title">Contact</h2>
+            <p>
+                TFBSpedia is developed at the Department of Computational Medicine and
+                Bioinformatics, University of Michigan.
+            </p>
+            <div class="placeholder">
+                <p style="margin-bottom: 6px;"><strong>To be supplied.</strong></p>
+                <p style="margin-bottom: 0;">
+                    Add the contact address for questions and bug reports, the lab or group
+                    name, and any links you want listed (lab website, source repository,
+                    issue tracker).
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center text-muted" style="padding: 20px;">
+        <p>&copy; 2026 TFBSpedia - A Database for Transcription Factor Binding Sites</p>
+    </footer>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

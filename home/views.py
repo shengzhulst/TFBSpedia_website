@@ -265,6 +265,10 @@ class TFBSViewSet(viewsets.ViewSet):
 # timeout and return "502 Proxy Error".
 # ---------------------------------------------------------------------------
 
+# "UNKNOWN" stands in for regions whose TF was never assigned; it is not a
+# transcription factor, so it is left out of the TF list download.
+PLACEHOLDER_TF_NAMES = {'UNKNOWN'}
+
 DOWNLOAD_CSV_HEADER = ['Chromosome', 'Start', 'End', 'ID', 'Confident_Score', 'Important_Score']
 
 # IDs taken from the ID cursor, and rows fetched, per round trip.  Keeping this
@@ -1332,6 +1336,66 @@ def batch_search_by_location(db_alias, locations, request=None, no_pagination=Fa
     except Exception as e:
         print(f"Database error in batch_search_by_location: {str(e)}")
         raise
+
+def about(request):
+    """
+    View function for the About page.
+    """
+    # Reuses the home page's pre-computed figures so the prose cannot drift
+    # from what is actually loaded.
+    summary = []
+    for species in ('human', 'mouse'):
+        stats = load_database_stats(species)
+        if not stats:
+            continue
+        totals = stats['totals']
+        summary.append({
+            'species': species.title(),
+            'regions': f"{totals['regions']:,}",
+            'tfs': f"{totals['tfs']:,}",
+            'cell_tissues': f"{totals['cell_tissues']:,}",
+            'sources': totals['sources'],
+            'assays': totals['assays'],
+            'sources_list': ', '.join(s['label'] for s in stats['by_source']),
+            'assays_list': ', '.join(s['label'] for s in stats['by_assay']),
+        })
+
+    return render(request, 'pages/about.html', {'summary': summary})
+
+
+def download_tf_list(request):
+    """
+    Download the list of transcription factors for one species as CSV.
+
+    Small enough (a couple of thousand rows) to build in one response, unlike
+    the region downloads.
+    """
+    species = 'mouse' if request.GET.get('species') == 'mouse' else 'human'
+    db_alias = species
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = (
+        f'attachment; filename="tfbspedia_transcription_factors_{species}.csv"'
+    )
+    writer = csv.writer(response)
+    writer.writerow(['TF', 'Regions_total', 'Regions_ChIP_seq', 'Regions_predicted'])
+
+    with connections[db_alias].cursor() as cursor:
+        cursor.execute("""
+            SELECT "tfbs", "all_count", "tfbs_count", "predicted_tfbs_count"
+            FROM "tfbs_name_counts"
+            WHERE "tfbs" <> ALL(%s)
+            ORDER BY "tfbs"
+        """, [sorted(PLACEHOLDER_TF_NAMES)])
+        for name, total, chip, predicted in cursor.fetchall():
+            writer.writerow([
+                name,
+                '' if total is None else total,
+                '' if chip is None else chip,
+                '' if predicted is None else predicted,
+            ])
+
+    return response
 
 def evaluation_metrics(request):
     """

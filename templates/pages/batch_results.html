@@ -93,13 +93,9 @@
     </style>
 </head>
 <body>
+    {% include "includes/topbar.html" %}
+
     <div class="container">
-        <header class="d-flex align-items-center justify-content-between">
-            <div class="logo">
-                <a href="{% url 'index' %}">TFBSpedia</a>
-            </div>
-        </header>
-        
         <div class="search-info">
             <h2>Batch Search Results for {{ species|title }} database{% if cell_line %} — Cell line: {{ cell_line }}{% endif %}{% if tfbs_type and tfbs_type != 'all' %} — TFBS type: {% if tfbs_type == 'chip' %}TFBS (ChIP-seq){% elif tfbs_type == 'predicted' %}Predicted TFBS{% endif %}{% endif %}</h2>
             <p id="results-count">Processing {{ query_count }} search queries with optimized batch SQL...</p>
