@@ -15,6 +15,8 @@ urlpatterns = [
     path('api/tfbs/download/', views.download_results, name='download_results'),
     path('api/batch-tfbs/download/', views.download_batch_results, name='download_batch_results'),
     path('tfbs-details/<int:pk>/', views.tfbs_details, name='tfbs_details'),
+    path('tfbs-details/<int:pk>/specific-tf/download/', views.download_specific_tf_sites,
+         name='download_specific_tf_sites'),
     path('evaluation-metrics/', views.evaluation_metrics, name='evaluation_metrics'),
     path('about/', views.about, name='about'),
     path('downloads/tf-list/', views.download_tf_list, name='download_tf_list'),

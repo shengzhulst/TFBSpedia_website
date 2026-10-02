@@ -1,0 +1,75 @@
+{% comment %}
+Feedback for download controls.
+
+Browsers do not open a save dialog by default -- the file goes straight to the
+download folder -- so clicking a download button produces no visible change in
+the page.  On the large region downloads nothing arrives for up to a minute
+either, because the file streams.  Between the two, a working download is
+indistinguishable from a broken button.
+
+Attach by adding class="js-download" to any button or link that starts one.
+{% endcomment %}
+<style>
+    .download-notice {
+        display: none;
+        margin: 8px 0 14px;
+        padding: 10px 14px;
+        border-radius: 6px;
+        background: #e8f1fc;
+        border: 1px solid #b7d3f6;
+        color: #184f95;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    .download-notice.is-visible { display: block; }
+    .download-notice strong { font-weight: bold; }
+    .download-spinner {
+        display: inline-block;
+        width: 11px;
+        height: 11px;
+        margin-right: 7px;
+        border: 2px solid #b7d3f6;
+        border-top-color: #184f95;
+        border-radius: 50%;
+        animation: download-spin 0.8s linear infinite;
+        vertical-align: -1px;
+    }
+    @keyframes download-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+        .download-spinner { animation: none; }
+    }
+</style>
+
+<script>
+(function () {
+    document.addEventListener('DOMContentLoaded', function () {
+        var buttons = document.querySelectorAll('.js-download');
+        if (!buttons.length) return;
+
+        Array.prototype.forEach.call(buttons, function (button) {
+            var notice = document.createElement('div');
+            notice.className = 'download-notice';
+            notice.setAttribute('role', 'status');
+            button.parentNode.insertBefore(notice, button.nextSibling);
+
+            button.addEventListener('click', function () {
+                // Large result sets stream for a while before the browser shows
+                // anything, so say so rather than leaving the page silent.
+                var slow = button.hasAttribute('data-download-slow');
+                notice.innerHTML =
+                    '<span class="download-spinner"></span>' +
+                    (slow
+                        ? 'Preparing your download. A large result set can take a minute &mdash; '
+                        : 'Your download has started. ') +
+                    'The file is saved to your browser&rsquo;s download folder ' +
+                    '(usually <strong>Downloads</strong>), not opened in a new window.';
+                notice.classList.add('is-visible');
+
+                window.setTimeout(function () {
+                    notice.classList.remove('is-visible');
+                }, slow ? 90000 : 12000);
+            });
+        });
+    });
+})();
+</script>

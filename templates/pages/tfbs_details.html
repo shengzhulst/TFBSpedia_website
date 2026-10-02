@@ -248,8 +248,64 @@
         </div>
         
         <div class="section">
+            {% if genome_tracks %}
+            <div class="section-title">Genome browser</div>
+            <div id="igv-status" class="text-muted" style="font-size: 0.9rem; margin-bottom: 10px;">
+                Loading genome browser&hellip;
+            </div>
+            <div id="igv-browser" style="margin-bottom: 8px;"></div>
+            <p class="text-muted" style="font-size: 0.85rem;">
+                Reference assembly: <strong>{{ genome_tracks.genome }}</strong>. Drag to pan,
+                scroll or use the controls to zoom; hover a feature for its details.
+            </p>
+            {{ genome_tracks|json_script:"igv-config" }}
+            {% endif %}
+
+            <div class="section-title">Specific TF table</div>
+            {% comment %}A server-side download rather than scraping the rendered table:
+               the table stops at SPECIFIC_TF_LIMIT rows and the file must not.{% endcomment %}
+            <a class="btn btn-primary mb-3 js-download"
+               href="{% url 'download_specific_tf_sites' pk %}?species={{ species }}">
+                Download Specific TF Table
+            </a>
+            <div style="max-height: 420px; overflow: auto;">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Chr</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>TF name</th>
+                        <th>Evidence</th>
+                        <th>Samples</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if specific_tf_sites %}
+                        {% for site in specific_tf_sites %}
+                            <tr>
+                                <td>{{ site.chr }}</td>
+                                <td>{{ site.start }}</td>
+                                <td>{{ site.end }}</td>
+                                <td>{{ site.tf }}</td>
+                                <td>{{ site.evidence }}</td>
+                                <td>{{ site.samples }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="6" class="text-center">No specific TF sites recorded for this region.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+            </div>
+            {% if specific_tf_truncated %}
+                <p class="text-muted" style="font-size: 0.85rem; margin-top: 8px;">
+                    Showing the first {{ specific_tf_sites|length }} of {{ specific_tf_total }} sites.
+                </p>
+            {% endif %}
+
             <div class="section-title">Overlap Annotations</div>
-            <button id="download-annotations-btn" class="btn btn-primary mb-3">Download Overlap Annotations</button>
+            <button id="download-annotations-btn" class="btn btn-primary mb-3 js-download">Download Overlap Annotations</button>
             <table class="table table-bordered table-hover">
                 <thead>
                     <tr>
@@ -421,5 +477,48 @@
         });
     });
     </script>
+
+    <script src="{% static 'js/igv.min.js' %}"></script>
+    <script>
+    (function () {
+        var node = document.getElementById('igv-config');
+        var host = document.getElementById('igv-browser');
+        var status = document.getElementById('igv-status');
+        if (!node || !host) return;
+
+        var config = JSON.parse(node.textContent);
+        igv.createBrowser(host, {
+            genome: config.genome,
+            locus: config.locus,
+            showChromosomeWidget: false,
+            tracks: config.tracks.map(function (track) {
+                /* Let each track size itself to its content, capped so one
+                   dense track cannot push the rest off the screen.  A few
+                   hundred TF sites are packed rather than given a row each. */
+                var dense = track.features.length > 12;
+                return {
+                    name: track.name,
+                    type: 'annotation',
+                    color: track.color,
+                    displayMode: dense ? 'SQUISHED' : 'EXPANDED',
+                    autoHeight: true,
+                    minHeight: 32,
+                    maxHeight: dense ? 180 : 110,
+                    features: track.features
+                };
+            })
+        }).then(function () {
+            status.style.display = 'none';
+        }).catch(function (error) {
+            /* The reference assembly is fetched from igv.org at view time, so a
+               blocked or offline network lands here rather than on a blank box. */
+            status.className = 'alert alert-warning';
+            status.textContent = 'Could not load the genome browser (' +
+                (error && error.message ? error.message : 'unknown error') +
+                '). The tables below carry the same coordinates.';
+        });
+    })();
+    </script>
+    {% include "includes/download_feedback.html" %}
 </body>
 </html> 

@@ -166,7 +166,7 @@
                     </tbody>
                 </table>
             </div>
-            <button id="download-btn" class="btn btn-primary">Download All Results</button>
+            <button id="download-btn" class="btn btn-primary js-download" data-download-slow>Download All Results</button>
         {% else %}
             <div class="no-results">
                 <div class="alert alert-info" role="alert">
@@ -373,5 +373,6 @@
     });
     </script>
     {% endif %}
+    {% include "includes/download_feedback.html" %}
 </body>
 </html>

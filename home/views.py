@@ -742,6 +742,175 @@ def get_overlap_annotations(tfbs_id, species='human'):
         print(overlap_annotations)
     return overlap_annotations
 
+# Rows the "Specific TF table" shows before truncating.  A handful of regions
+# carry hundreds of distinct binding sites and rendering them all makes the
+# detail page unusable; the count above the table always reports the true total.
+SPECIFIC_TF_LIMIT = 500
+
+
+def _specific_tf_sites(pk, species='human'):
+    """
+    Every distinct (TF, site) pair recorded inside one TFBS region.
+
+    The region is a merged interval; tf_evidence records the individual site
+    each TF was seen at, as offsets from the region start.  A site may extend a
+    little beyond the region on either side, which is expected for a consensus
+    interval, so the coordinates are reported as they fall rather than clamped.
+
+    The same site is usually recorded once per biological sample, so those are
+    collapsed into a sample count.  Shared by the detail page and its download,
+    which is why it returns everything and leaves truncation to the caller.
+    """
+    db_alias = 'human' if species == 'human' else 'mouse'
+
+    with connections[db_alias].cursor() as cursor:
+        # tf_evidence is partitioned by region_id, so filtering on it lets
+        # Postgres read only the one chromosome's partition.
+        cursor.execute("""
+            SELECT d."tf_symbol",
+                   p."seqnames",
+                   p."start" + e."site_start_off" AS site_start,
+                   p."start" + e."site_end_off"   AS site_end,
+                   bool_or(e."evidence" = 'b')    AS measured,
+                   count(DISTINCT e."cell_id")    AS samples
+            FROM "tf_evidence" e
+            JOIN "TFBS_position" p ON p."ID" = e."region_id"
+            JOIN "tf_dictionary" d ON d."tf_id" = e."tf_id"
+            WHERE e."region_id" = %s
+            GROUP BY 1, 2, 3, 4
+            ORDER BY site_start, d."tf_symbol"
+        """, [pk])
+        rows = cursor.fetchall()
+
+    return [{
+        'tf': tf,
+        'chr': seqnames,
+        'start': start,
+        'end': end,
+        # 'b' is a measured ChIP-seq site, 'p' a motif predicted in open
+        # chromatin -- the same split the search filter offers.
+        'evidence': 'ChIP-seq' if measured else 'Predicted',
+        'samples': samples,
+    } for tf, seqnames, start, end, measured, samples in rows]
+
+
+def gather_specific_tf_sites(pk, species='human'):
+    """Detail-page view of _specific_tf_sites, truncated for rendering."""
+    sites = _specific_tf_sites(pk, species)
+    return {
+        'specific_tf_sites': sites[:SPECIFIC_TF_LIMIT],
+        'specific_tf_total': len(sites),
+        'specific_tf_truncated': len(sites) > SPECIFIC_TF_LIMIT,
+    }
+
+
+def download_specific_tf_sites(request, pk):
+    """
+    Download the Specific TF table for one region as CSV.
+
+    Returns every site, not the first SPECIFIC_TF_LIMIT the page renders -- a
+    download that silently stopped where the table does would be worse than no
+    download at all.  At most ~1,000 rows, so no streaming needed here.
+    """
+    species = 'mouse' if request.GET.get('species') == 'mouse' else 'human'
+    sites = _specific_tf_sites(pk, species)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = (
+        f'attachment; filename="specific_tf_sites_{species}_region_{pk}.csv"'
+    )
+    writer = csv.writer(response)
+    writer.writerow(['Chr', 'Start', 'End', 'TF', 'Evidence', 'Samples'])
+    for site in sites:
+        writer.writerow([site['chr'], site['start'], site['end'],
+                         site['tf'], site['evidence'], site['samples']])
+    return response
+
+
+# Reference assembly each species' coordinates are on.  Determined by comparing
+# the data's own per-chromosome maxima against the published chromosome lengths:
+# human carries tens of thousands of positions that only fit hg38 (chr20 beyond
+# the hg19 end, chr5, chr7, chr11, chr3), and mouse sits entirely inside mm10
+# while overrunning mm39.  Getting this wrong would silently misplace every
+# feature against the genes and sequence igv.js draws beneath them.
+GENOME_BUILD = {'human': 'hg38', 'mouse': 'mm10'}
+
+# Flat, readable colours per track; the region itself is the one that stands out.
+TRACK_COLOURS = {
+    'region': '#d64545',
+    'sites': '#2a78d6',
+    'annotation': '#1baf7a',
+}
+
+
+def build_genome_tracks(region, sites, annotations, species):
+    """
+    Assemble the igv.js track list for one region's detail page.
+
+    Features are handed to igv.js inline rather than served as BED: the page has
+    already queried all of it for the tables above, so a second round trip would
+    only duplicate the work.
+
+    Returns None when the region has no coordinates, so the template can leave
+    the browser out rather than render an empty one.
+    """
+    if not region.get('chr') or region.get('start') is None:
+        return None
+
+    chrom, start, end = region['chr'], region['start'], region['end']
+
+    tracks = [{
+        'name': 'TFBS region',
+        'color': TRACK_COLOURS['region'],
+        'features': [{
+            'chr': chrom, 'start': start, 'end': end,
+            'name': f'{chrom}:{start}-{end}',
+        }],
+    }]
+
+    if sites:
+        tracks.append({
+            'name': 'Specific TF sites',
+            'color': TRACK_COLOURS['sites'],
+            'features': [{
+                'chr': site['chr'], 'start': site['start'], 'end': site['end'],
+                'name': f"{site['tf']} ({site['evidence']})",
+            } for site in sites],
+        })
+
+    # One track per annotation type, so a reader can tell an enhancer from a
+    # histone peak without opening a popup.  Types with nothing to show are
+    # left out entirely.
+    by_type = {}
+    for annotation in annotations or []:
+        if not annotation.get('chr') or annotation.get('start') is None:
+            continue
+        by_type.setdefault(annotation['type'], []).append({
+            'chr': annotation['chr'],
+            'start': annotation['start'],
+            'end': annotation['end'],
+            'name': annotation.get('extra') or annotation['type'],
+        })
+    for annotation_type, features in sorted(by_type.items()):
+        label = {'Cookbook_ChIP': 'Codebook ChIP',
+                 'Cookbook_GHT_SELEX': 'Codebook GHT-SELEX'}.get(annotation_type, annotation_type)
+        tracks.append({
+            'name': label,
+            'color': TRACK_COLOURS['annotation'],
+            'features': features,
+        })
+
+    # Pad the initial view so the region is not flush against the edges, and
+    # keep a floor so a 10 bp region does not open zoomed past the base level.
+    span = max(end - start, 1)
+    padding = max(span, 200)
+    return {
+        'genome': GENOME_BUILD.get(species, 'hg38'),
+        'locus': f'{chrom}:{max(start - padding, 1)}-{end + padding}',
+        'tracks': tracks,
+    }
+
+
 def tfbs_details(request, pk):
     species = request.GET.get('species', 'human')
     region_info = gather_information_chr_start_end(pk, species)
@@ -749,6 +918,9 @@ def tfbs_details(request, pk):
     source_info = gather_source_info(pk, species)
     scores_info = gather_scores(pk, species)
     overlap_annotations = get_overlap_annotations(pk, species)
+    specific_tf_info = gather_specific_tf_sites(pk, species)
+    genome_tracks = build_genome_tracks(
+        region_info, specific_tf_info['specific_tf_sites'], overlap_annotations, species)
     
     # Get proportion information
     proportion_info = get_proportion_info(
@@ -763,6 +935,11 @@ def tfbs_details(request, pk):
         **tfbs_info, 
         **source_info, 
         **scores_info, 
+        **specific_tf_info,
+        # Needed to build the Specific TF table's download link.
+        'pk': pk,
+        'species': species,
+        'genome_tracks': genome_tracks,
         'overlap_annotations': overlap_annotations,
         'proportion_info': proportion_info
     }

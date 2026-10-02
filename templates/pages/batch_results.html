@@ -103,7 +103,7 @@
         
         <div class="batch-actions">
             <a href="{% url 'index' %}" class="btn btn-secondary">New Search</a>
-            <button id="download-btn" class="btn btn-primary">Download All Results</button>
+            <button id="download-btn" class="btn btn-primary js-download" data-download-slow>Download All Results</button>
         </div>
         
         <div class="table-container">
@@ -267,5 +267,6 @@
             window.location.href = '/api/batch-tfbs/download/?' + params.toString();
         });
     </script>
+    {% include "includes/download_feedback.html" %}
 </body>
 </html>
